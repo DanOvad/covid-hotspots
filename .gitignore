@@ -1,3 +1,7 @@
 
 
+# Do not include the virtual environment
 venv/
+
+# Do not include checkpoints
+.ipynb_checkpoints/
