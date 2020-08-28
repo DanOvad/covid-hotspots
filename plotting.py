@@ -74,3 +74,24 @@ def choropleth_deaths_county(df, geojson, category, date):
                       margin={"r":5,"t":40,"l":5,"b":40})
     print("Finished Generating Plot")
     return fig
+
+
+# States
+
+def choropleth_state_deaths_density(covid_states_df, category):
+    fig = go.Figure(data=go.Choropleth(
+        locations=covid_states_df['state'], # Spatial coordinates
+        z = covid_states_df[category].astype(float), # Data to be color-coded
+        locationmode = 'USA-states', # set of locations match entries in `locations`
+        colorscale = 'thermal',
+        colorbar_title = "Total Deaths",
+        zmin=0,
+        zmax=6500,
+    ))
+
+    fig.update_layout(
+        height = 500,
+        title_text = 'Total Covid-19 Deaths by State',
+        geo_scope='usa', # limite map scope to USA
+    )
+    return fig

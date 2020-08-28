@@ -3,12 +3,15 @@
 # Do not include the virtual environment
 venv/
 
+# Do not include __pycache__
+#__pycache__/
+
 # Do not include data
 data/
 
 # Do not include 
 scratch.*
-scratch/a
+scratch/
 
 # Do not include checkpoints
 .ipynb_checkpoints/

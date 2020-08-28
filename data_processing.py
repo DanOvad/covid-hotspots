@@ -61,23 +61,26 @@ def get_covid_county_data():
     df['log_deaths'] = np.log(df['deaths'] + 1)
     return df
 
-
 def get_covid_state_data():
-    # Coronavirus data by state from covidtracking API
-    states_url = "https://covidtracking.com/api/states/daily"
-    # Create requests object
-    r = requests.get(states_url)
-    
-    
-    # Cleaning
-    # Set date as dateTime format
-    states_df['date'] = pd.to_datetime(states_df.date, format="%Y%m%d")
-
-    #Extract values for date, state, and death
-    states_df = states_df[['date', 'state', 'death', 'total']].sort_values('date')
-
-    deaths = states_df.reset_index()
-    return states_df
+    today = time.strftime('%Y%m%d')
+    filepath = f'data/covid_states_{today}.csv'
+    if path.exists(filepath):
+        print("Pulling from file.")
+        covid_states_df = pd.read_csv(filepath)
+    else:
+        print("Pulling from Covid Tracking API")
+        # Coronavirus data by state from covidtracking API
+        states_url = "https://covidtracking.com/api/states/daily"
+        r = requests.get(states_url)
+        covid_states_df = pd.DataFrame(r.json())
+        
+        # Set date as datetime format
+        covid_states_df['date'] = pd.to_datetime(covid_states_df.date, format="%Y%m%d")
+        # set date to index
+        covid_states_df.set_index(keys='date',inplace=True)
+        covid_states_df.to_csv(filepath)
+            
+    return covid_states_df
 
 def generate_slider_dates(df):
     # Hardcode a start date
