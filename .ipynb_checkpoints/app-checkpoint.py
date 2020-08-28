@@ -42,6 +42,7 @@ covid_counties['fips'] = covid_counties['fipsnum'].astype(str).apply(lambda x: '
 covid_counties['date'] = pd.to_datetime(covid_counties['date'], format = '%Y-%m-%d')
     # Create log_deaths column
 covid_counties['log_deaths'] = np.log(covid_counties['deaths'] + 1)
+
 ################################################################################
 # Import the unemployment data because it has the fips codes
 df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/fips-unemp-16.csv",
@@ -311,8 +312,8 @@ app.layout = html.Div(
                     value=time.mktime(datetime.datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d').timetuple()),
                     marks=date_dict,
                     step=None
-                )
-            ], className = 'six columns'),
+                )], className = 'six columns'
+            ),
         # Item 2 - Include County Deaths Scatter
             html.Div(
                 dcc.Graph(
@@ -421,3 +422,6 @@ def update_scatter_state(input_value):
 
 if __name__ == '__main__':
     app.run_server(debug=True, use_reloader = True)
+
+    
+    html.Div(id='header_section',children=[]),

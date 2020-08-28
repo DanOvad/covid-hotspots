@@ -3,5 +3,13 @@
 # Do not include the virtual environment
 venv/
 
+# Do not include data
+data/
+
+# Do not include 
+scratch.*
+scratch/a
+
 # Do not include checkpoints
 .ipynb_checkpoints/
+*.ipynb_checkpoints
