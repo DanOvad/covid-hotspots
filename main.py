@@ -72,6 +72,58 @@ app.layout = html.Div(
         
         ]), # close header div
         html.Div(id='my-hover'),
+        html.Div(id='div-slider',style={'height':'100px'},
+            children=[
+                dcc.Slider(
+                    id='crossfilter_date_slider',
+                    min=min(date_dict),
+                    max=max(date_dict),
+                    value=max(date_dict),
+                    marks=date_dict,
+                    step=None
+                ) # slider dcc])
+            ]
+        ), # slider div
+        
+        html.Div(id='state-section',className='row',
+            children=[
+                html.Div(id='state-choropleth-div',className='six columns',
+                    children=[
+                        dcc.Graph(
+                            id='state-choropleth', 
+                            figure=plotting.plot_choropleth_state(
+                                COVID_STATES_DF,
+                                time.strftime('%Y-%m-%d',time.localtime(max(date_dict))),
+                                'death'
+                            )
+                        )
+                    ]
+                ),
+                html.Div(id='state-scatter-div',className='six columns',
+                    children=[
+                        dcc.Dropdown(id='state-dropdown',
+                            value='death',
+                            options=[
+                                {'label':'death','value':'death'},
+                                {'label':'deathIncrease','value':'deathIncrease'},
+                                {'label':'positive','value':'positive'},
+                                {'label':'positiveIncrease','value':'positiveIncrease'},
+                                {'label':'hospitalizedCurrently','value':'hospitalizedCurrently'},
+                                {'label':'hospitalizedCumulative','value':'hospitalizedCumulative'},
+                                {'label':'hospitalizedIncrease', 'value':'hospitalizedIncrease'}
+                            ]),
+                        dcc.Graph(id='state-scatter',
+                            figure=plotting.plot_scatter_state(
+                                COVID_STATES_DF,
+                                'NY',
+                                ['deathIncrease','death']
+                            )
+                        )
+                    ]
+                )
+            ]
+        ),
+        html.Br(),
         # open div for county graphs
         html.Div(id='county-section',className="row",
             children=[
@@ -79,33 +131,20 @@ app.layout = html.Div(
                     children=[ # county choropleth div
                         dcc.Graph( # county choropleth graph
                             id='county-choropleth',
-                            figure=plotting.choropleth_deaths_county(
+                            figure=plotting.plot_choropleth_county(
                                 COVID_COUNTIES_DF,
                                 COUNTY_GEOJSON,
                                 'deaths',
                                 date = time.strftime('%Y-%m-%d',time.localtime(max(date_dict)))
                             )
-                        ),
-                        html.Div(id='div-slider',
-                            children=[
-                                dcc.Slider(
-                                    id='crossfilter_date_slider',
-                                    min=min(date_dict),
-                                    max=max(date_dict),
-                                    value=max(date_dict),
-                                    marks=date_dict,
-                                    step=None
-                                ) # slider dcc])
-                            ]
-                        ) # slider div
+                        )
                     ] 
                 ), # choropleth div
                 # County Scatter
                 html.Div(className='six columns',
                     children=[
                         dcc.Dropdown(
-                            id='dropdown-category-filter',
-                            #className='row',
+                            id='county-dropdown',
                             value='deaths',
                             options=[
                                 {'label':'deaths','value':'deaths'},
@@ -113,7 +152,7 @@ app.layout = html.Div(
                             ]
                         ), # close dcc dropdown
                         dcc.Graph(
-                            id='scatter',
+                            id='scatter-county',
                             figure = plotting.scatter_deaths_county(
                                 COVID_COUNTIES_DF,
                                 'deaths',
@@ -123,33 +162,6 @@ app.layout = html.Div(
                         ) # close dcc graph
                     ]
                 ), # close div tag
-            ]
-        ),
-        html.Div(id='state-section',className='row',
-            children=[
-                html.Div(id='state-choropleth-div',className='six columns',
-                    children=[
-                        dcc.Graph(
-                            id='state-choropleth', 
-                            figure=plotting.choropleth_state_deaths_density(
-                                COVID_STATES_DF,
-                                'death',
-                                time.strftime('%Y-%m-%d',time.localtime(max(date_dict)))
-                            )
-                        )
-                    ]
-                ),
-                html.Div(id='state-scatter-div',className='six columns',
-                    children=[
-                        dcc.Dropdown('state-dropdown'),
-                        dcc.Graph(id='state-scatter',
-                            figure=plotting.generate_state_scatter(
-                                COVID_STATES_DF,
-                                'NY'
-                            )
-                        )
-                    ]
-                )
             ]
         )
     ])
@@ -165,18 +177,30 @@ def update_output_div(date):
     date = time.strftime('%Y-%m-%d',time.localtime(date))
     return 'You\'ve entered "{}"'.format(date)
 
-
-# SCATTER PLOT from HOVER
+# County Choropleth
 @app.callback(
-    Output(component_id='scatter', component_property='figure'),
+    Output('county-choropleth','figure'),
+    [Input('county-dropdown','value'),
+     Input('crossfilter_date_slider','value')]
+)
+
+def update_county_choropleth(category, date):
+    date = time.strftime('%Y-%m-%d',time.localtime(date))
+    return plotting.plot_choropleth_county(COVID_COUNTIES_DF,
+                                             COUNTY_GEOJSON,
+                                             category,
+                                             date)
+
+# County Scatter
+@app.callback(
+    Output(component_id='scatter-county', component_property='figure'),
     [Input(component_id='county-choropleth', component_property='hoverData')],
-    [State(component_id='dropdown-category-filter',component_property='value'),
+    [State(component_id='county-dropdown',component_property='value'),
     State('crossfilter_date_slider','value')]
 )
 def update_scatter_counter(fips_input,category,slider_date):
     # Convert from epoch time to time struct to string
     slider_date = time.strftime('%Y-%m-%d',time.localtime(slider_date))
-    # Create a series of cases by date
     try:
         fips = fips_input['points'][0]['location']
     except:
@@ -185,45 +209,39 @@ def update_scatter_counter(fips_input,category,slider_date):
     return scatter
 
 
-# UPDATE choropleth from dropdown or slider
-@app.callback(
-    Output('county-choropleth','figure'),
-    [Input('dropdown-category-filter','value'),
-     Input('crossfilter_date_slider','value')]
-)
-
-def update_county_choropleth(category, date):
-    date = time.strftime('%Y-%m-%d',time.localtime(date))
-    return plotting.choropleth_deaths_county(COVID_COUNTIES_DF,
-                                             COUNTY_GEOJSON,
-                                             category,
-                                             date)
-
-
+# State Choropleth
 @app.callback(
     Output('state-choropleth','figure'),
-    [Input('crossfilter_date_slider','value')]
+    [Input('crossfilter_date_slider','value'),
+    Input(component_id='state-dropdown',component_property='value')]
 )
-
-def update_state_choropleth(date):
+def update_state_choropleth(date,category):
     date = time.strftime('%Y-%m-%d',time.localtime(date))
-    return plotting.choropleth_state_deaths_density(COVID_STATES_DF,
-                                             'death',
-                                             date)
-
+    return plotting.plot_choropleth_state(COVID_STATES_DF,
+                                             date,
+                                             category)
+# State Scatter
 @app.callback(
     Output(component_id='state-scatter', component_property='figure'),
     [Input(component_id='state-choropleth', component_property='hoverData')],
+    [State(component_id='state-dropdown',component_property='value')]
 )
-def update_state_scatter(state_input):
+def update_state_scatter(state_input,category):
+    # Check categories to plot daily and cumulative values for each category type
+    if category in ('death','deathIncrease'):
+        category_tuple = ('deathIncrease','death')
+    elif category in ('positiveIncrease','positive'):
+        category_tuple = ('positiveIncrease','positive')
+    elif category in ('hospitalizedIncrease','hospitalizedCurrently','hospitalizedCumulative'):
+        category_tuple = ('hospitalizedIncrease','hospitalizedCurrently')
+    else:
+        category_tuple = ('deathIncrease','death')
     try:
         state = state_input['points'][0]['location']
     except:
         state = 'CA'
-    scatter = plotting.generate_state_scatter(COVID_STATES_DF,state)
+    scatter = plotting.plot_scatter_state(COVID_STATES_DF, state, category_tuple)
     return scatter
-
-
 
 
 if __name__ == '__main__':
