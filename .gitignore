@@ -4,7 +4,7 @@
 venv/
 
 # Do not include __pycache__
-#__pycache__/
+__pycache__/
 
 # Do not include data
 data/
