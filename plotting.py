@@ -40,14 +40,27 @@ def scatter_deaths_county(df, category, slider_date, fips = '01001'):
     county_name = df[county_mask & date_mask]['county'].to_string(index = False)
     state_name = df[county_mask & date_mask]['state'].to_string(index = False)
 
-    # Create scatter plotly
-    scatter = px.scatter(data_frame = county_series,
+    
+    fig = go.Figure()
+    #fig.update_layout(height=400,title=f'{county_name},{state_name} {category} by day')
+    fig.add_trace(
+        go.Scatter(x = county_series.index,
+                  y = county_series, 
+                name=category
+        )
+    )
+    '''
+    px.scatter(data_frame = county_series,
               x = county_series.index,
               y = county_series,
               title = f'{county_name},{state_name} {category} by day')
-    scatter.update_layout(
+            '''
+    
+    fig.update_layout(
+        title=f'{county_name},{state_name} {category} by day',
         height = 400, 
         margin = {"r":40,"t":40,"l":40,"b":40},
+        paper_bgcolor='rgb(200,200,200)',
         shapes=[
             dict(
               type= 'line',
@@ -56,12 +69,12 @@ def scatter_deaths_county(df, category, slider_date, fips = '01001'):
             )
         ]
     )
-    scatter.update_yaxes(title_text=f"<b>Total</b> {category}")
-    scatter.update_xaxes(title_text="<b>Date</b>")
-    return scatter
+    fig.update_yaxes(title_text=f"<b>Total</b> {category}")
+    fig.update_xaxes(title_text="<b>Date</b>")
+    return fig
 
 # CHOROPLETH deaths for COUNTY
-def choropleth_deaths_county(df, geojson, category, date):
+def plot_choropleth_county(df, geojson, category, date):
     print("Generating Plot")
     date_mask = (df['date'] == date)
     mean = round(df[date_mask][category].mean(),-1)
@@ -86,6 +99,7 @@ def choropleth_deaths_county(df, geojson, category, date):
                    scope = 'usa')
     fig.update_layout(
         #height = 400,
+        paper_bgcolor='rgb(200,200,200)',
         title_text = f'Deaths by county on {date}',
         margin={"r":5,"t":30,"l":5,"b":5}
     )
@@ -95,11 +109,11 @@ def choropleth_deaths_county(df, geojson, category, date):
 
 # States
 
-def choropleth_state_deaths_density(covid_states_df, category, date):
+def plot_choropleth_state(covid_states_df, date, category='death'):
     # Create a mask to filter the df to only a specific date
     date_mask = (covid_states_df['date'] == date)
     # Determine the median of values to plot for legend
-    mean = round(covid_states_df[date_mask][category].mean(),-1)
+    #mean = round(covid_states_df[date_mask][category].mean(),-1)
     
     # Create Figure
     fig = go.Figure(data=go.Choropleth(
@@ -108,36 +122,47 @@ def choropleth_state_deaths_density(covid_states_df, category, date):
         locationmode = 'USA-states',
         colorscale = 'thermal',
         colorbar_title = f"Total {category}",
-        zmin=0,
-        zmax=mean,
+        #zmin=0,
+        #zmax=mean,
     ))
-
+    fig.update_geos(center = {"lat": 37.0902, "lon": -95.7129},
+                   scope = 'usa')
+    
     fig.update_layout(
         #height = 400,
+        margin={"r":5,"t":30,"l":5,"b":5},
         title_text = f'Total Covid-19 {category} by State on {date}',
-        geo_scope='usa', # limite map scope to USA
+        geo_scope='usa',
+        paper_bgcolor='rgb(200,200,200)',
+        plot_bgcolor='rgb(200,200,200)'
     )
+    
+    fig.layout.plot_bgcolor = '#DCDCDC'
+    
     return fig
 
-
-def generate_state_scatter(covid_state_df,state):
+def plot_scatter_state(covid_state_df,state,category_tuple=('deathIncrease','death')):
+    daily, cumulative = category_tuple
+    
+    #daily = category_list[0]
+    #cumulative = category_list[1]
     
     state_mask = (covid_state_df['state'] == state)
     covid_state_df[state_mask]
 
     fig = go.Figure()
     fig = make_subplots(specs=[[{"secondary_y":True}]])
-    fig.update_layout(height=500,title_text="Daily and Total Deaths")
+    fig.update_layout(height=400,title_text="Daily and Total Deaths",paper_bgcolor='rgb(200,200,200)')
     fig.add_trace(go.Bar(x=covid_state_df[state_mask]['date'],
-            y=covid_state_df[state_mask]['deathIncrease'], name="deathIncrease"), secondary_y=False,
+            y=covid_state_df[state_mask][daily], name=daily), secondary_y=False,
         )
     fig.add_trace(
             go.Scatter(x=covid_state_df[state_mask]['date'],
-                y=covid_state_df[state_mask]['death'], 
-                name="Total"
+                y=covid_state_df[state_mask][cumulative], 
+                name=cumulative
             ),secondary_y=True
         )
-    fig.update_yaxes(title_text="<b>Daily</b> Deaths", secondary_y=False)
-    fig.update_yaxes(title_text="<b>Total</b> Deaths to Date", secondary_y=True)
+    fig.update_yaxes(title_text=f"Daily {daily}", secondary_y=False)
+    fig.update_yaxes(title_text=f"{cumulative} to Date", secondary_y=True)
 
     return fig

@@ -46,10 +46,10 @@ def get_covid_county_data():
     today = time.strftime('%Y%m%d')
     filepath = f'data/covid_counties_{today}.csv'
     if path.exists(filepath):
-        print("Pulling from file.")
+        print("Pulling county data from file.")
         df = pd.read_csv(filepath)
     else:
-        print("Pulling from github.")
+        print("Pulling county data from github.")
         url = 'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv'
         df = pd.read_csv(url)
         df.to_csv(filepath)
@@ -67,17 +67,18 @@ def get_covid_state_data():
     today = time.strftime('%Y%m%d')
     filepath = f'data/covid_states_{today}.csv'
     if path.exists(filepath):
-        print("Pulling from file.")
+        print("Pulling state data from file.")
         covid_states_df = pd.read_csv(filepath)
     else:
-        print("Pulling from Covid Tracking API")
+        print("Pulling state data from Covid Tracking API")
         # Coronavirus data by state from covidtracking API
         states_url = "https://covidtracking.com/api/states/daily"
         r = requests.get(states_url)
         covid_states_df = pd.DataFrame(r.json())
         
         # Set date as datetime format
-        covid_states_df['date'] = pd.to_datetime(covid_states_df.date, format="%Y%m%d")
+        covid_states_df['datetime'] = pd.to_datetime(covid_states_df['date'], format="%Y%m%d")
+        covid_states_df['date'] = covid_states_df['datetime'].map(lambda x:x.strftime('%Y-%m-%d'))
         # set date to index
         #covid_states_df.set_index(keys='date',inplace=True)
         covid_states_df.to_csv(filepath)
