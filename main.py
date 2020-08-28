@@ -5,7 +5,7 @@ import numpy as np
 import requests
 
 import geopandas as gpd
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
 #import geoplot as gplt
@@ -25,63 +25,26 @@ import datetime
 # Custom libraries
 import data_processing
 import plotting
-################################################################################
-# IMPORT DATA
 
-################################################################################
-# Get the Map of US counties
-with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
-    COUNTY_GEOJSON = json.load(response)
+# Get county geojson for county polygones
+COUNTY_GEOJSON = data_processing.load_county_geojson()
+# Get county coronavirus data
+COVID_COUNTIES_DF = data_processing.get_covid_county_data()
+# Get state coronavirus data
+COVID_STATES_DF = data_processing.get_covid_state_data()
 
-################################################################################
-# IMPORTING
-    # Corona County Data
-COVID_COUNTIES = data_processing.get_covid_county_data()
-
-################################################################################
-# Import the unemployment data because it has the fips codes
-#df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/fips-unemp-16.csv",
-                  # dtype={"fips": str})
-#df['prefix'] = [x[:2] for x in df['fips']]
-
-################################################################################
-# Coronavirus data by state from covidtracking API
-states_url = "https://covidtracking.com/api/states/daily"
-# Create requests object
-r = requests.get(states_url)
-
-# Create df of states
-states_df = pd.DataFrame(r.json())
-
-# Cleaning
-# Set date as dateTime format
-states_df['date'] = pd.to_datetime(states_df.date, format="%Y%m%d")
-
-#Extract values for date, state, and death
-states_df = states_df[['date', 'state', 'death', 'total']].sort_values('date')
-
-deaths = states_df.reset_index()
-################################################################################
-# Read in states data
-states = pd.read_csv('./data/tbl_states.csv')
-
-# Fix fips code to be a string, prefix 0 to single digit codes
-states['fips'] = states['fips'].astype(str).apply(lambda x: '0' + x if len(x) == 1 else x)
-################################################################################
-# DATA CLEANING
-
-date = time.strftime('%Y-%m-%d')
-state = 'New York'
-state_mask = (COVID_COUNTIES['state'] == state)
-date_mask = (COVID_COUNTIES['date'] == date)
-min_date = int(time.mktime(COVID_COUNTIES['date'].min().timetuple()))
-
-date_dict = data_processing.generate_slider_dates(COVID_COUNTIES)
+date_dict = data_processing.generate_slider_dates(COVID_COUNTIES_DF)
 
 ################################################################################
 
 # Create Dash object
-app = dash.Dash(external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css'])
+app = dash.Dash(
+        external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css'],
+        meta_tags=[
+            {"name": "viewport",
+             "content": "width=device-width, initial-scale=1"}
+        ]
+    )
 
 colors = {
     'background': '#c8a2c8',# '#6495ED',  #FF69B4 == pink , #c8a2c8 = lilac
@@ -112,47 +75,83 @@ app.layout = html.Div(
         # open div for county graphs
         html.Div(id='county-section',className="row",
             children=[
-            html.Div(className='six columns',
-                children=[ # county choropleth div
-                    dcc.Graph( # county choropleth graph
-                        id='choropleth',
-                        figure=plotting.choropleth_deaths_county(COVID_COUNTIES,
-                                                COUNTY_GEOJSON,'deaths',
-                                                date = COVID_COUNTIES['date'].max())
-                    ),
-                    html.Div(id='div-slider',
-                        children=[
-                            dcc.Slider(
-                                id='crossfilter_date_slider',
-                                min=min(date_dict),
-                                max=max(date_dict),
-                                value=max(date_dict),
-                                marks=date_dict,
-                                step=None
-                            ) # slider dcc])
-                        ]
-                    ) # slider div
-                ] 
-            ), # choropleth div
-            # Item 2 - Include County Deaths Scatter
-            html.Div(className='six columns',children=[
-                dcc.Dropdown(
-                    id='dropdown-category-filter',
-                    #className='row',
-                    value='deaths',
-                    options=[
-                        {'label':'deaths','value':'deaths'},
-                        {'label':'cases','value':'cases'}
+                html.Div(className='six columns',
+                    children=[ # county choropleth div
+                        dcc.Graph( # county choropleth graph
+                            id='county-choropleth',
+                            figure=plotting.choropleth_deaths_county(
+                                COVID_COUNTIES_DF,
+                                COUNTY_GEOJSON,
+                                'deaths',
+                                date = time.strftime('%Y-%m-%d',time.localtime(max(date_dict)))
+                            )
+                        ),
+                        html.Div(id='div-slider',
+                            children=[
+                                dcc.Slider(
+                                    id='crossfilter_date_slider',
+                                    min=min(date_dict),
+                                    max=max(date_dict),
+                                    value=max(date_dict),
+                                    marks=date_dict,
+                                    step=None
+                                ) # slider dcc])
+                            ]
+                        ) # slider div
+                    ] 
+                ), # choropleth div
+                # County Scatter
+                html.Div(className='six columns',
+                    children=[
+                        dcc.Dropdown(
+                            id='dropdown-category-filter',
+                            #className='row',
+                            value='deaths',
+                            options=[
+                                {'label':'deaths','value':'deaths'},
+                                {'label':'cases','value':'cases'}
+                            ]
+                        ), # close dcc dropdown
+                        dcc.Graph(
+                            id='scatter',
+                            figure = plotting.scatter_deaths_county(
+                                COVID_COUNTIES_DF,
+                                'deaths',
+                                time.strftime('%Y-%m-%d',time.localtime(max(date_dict))),
+                                '01001'
+                            )
+                        ) # close dcc graph
+                    ]
+                ), # close div tag
+            ]
+        ),
+        html.Div(id='state-section',className='row',
+            children=[
+                html.Div(id='state-choropleth-div',className='six columns',
+                    children=[
+                        dcc.Graph(
+                            id='state-choropleth', 
+                            figure=plotting.choropleth_state_deaths_density(
+                                COVID_STATES_DF,
+                                'death',
+                                time.strftime('%Y-%m-%d',time.localtime(max(date_dict)))
+                            )
+                        )
                     ]
                 ),
-                dcc.Graph(
-                    id='scatter',
-                    figure = plotting.scatter_deaths_county(COVID_COUNTIES,
-                                                            'deaths',
-                                                            '01001')
+                html.Div(id='state-scatter-div',className='six columns',
+                    children=[
+                        dcc.Dropdown('state-dropdown'),
+                        dcc.Graph(id='state-scatter',
+                            figure=plotting.generate_state_scatter(
+                                COVID_STATES_DF,
+                                'NY'
+                            )
+                        )
+                    ]
                 )
-            ]), # close div tag
-            ])
+            ]
+        )
     ])
 
 server = app.server
@@ -170,45 +169,64 @@ def update_output_div(date):
 # SCATTER PLOT from HOVER
 @app.callback(
     Output(component_id='scatter', component_property='figure'),
-    [Input(component_id='choropleth', component_property='hoverData')],
-    [State(component_id='dropdown-category-filter',component_property='value')]
+    [Input(component_id='county-choropleth', component_property='hoverData')],
+    [State(component_id='dropdown-category-filter',component_property='value'),
+    State('crossfilter_date_slider','value')]
 )
-def update_scatter_counter(fips_input,category):
+def update_scatter_counter(fips_input,category,slider_date):
+    # Convert from epoch time to time struct to string
+    slider_date = time.strftime('%Y-%m-%d',time.localtime(slider_date))
     # Create a series of cases by date
     try:
         fips = fips_input['points'][0]['location']
     except:
         fips = '01001'
-    scatter = plotting.scatter_deaths_county(COVID_COUNTIES,category,fips)
+    scatter = plotting.scatter_deaths_county(COVID_COUNTIES_DF,category,slider_date,fips)
     return scatter
 
 
-#@app.callback(
-#    Output(component_id='choropleth', component_property='figure'),
-#    [Input(component_id='crossfilter_date_slider', component_property='value')],
-#    [State(component_id='dropdown-category-filter',component_property='value')]
-#)
-#def update_county_choropleth(date, category):
-#    date = time.strftime('%Y-%m-%d',time.localtime(date))
-#    return plotting.choropleth_deaths_county(COVID_COUNTIES,
-#                                             COUNTY_GEOJSON,
-#                                             category,
-#                                             date)
-
+# UPDATE choropleth from dropdown or slider
 @app.callback(
-    Output('choropleth','figure'),
-    [Input('dropdown-category-filter','value')],
-    [State('crossfilter_date_slider','value')]
+    Output('county-choropleth','figure'),
+    [Input('dropdown-category-filter','value'),
+     Input('crossfilter_date_slider','value')]
 )
 
-def update_county_choropleth_category(category, date):
+def update_county_choropleth(category, date):
     date = time.strftime('%Y-%m-%d',time.localtime(date))
-    return plotting.choropleth_deaths_county(COVID_COUNTIES,
+    return plotting.choropleth_deaths_county(COVID_COUNTIES_DF,
                                              COUNTY_GEOJSON,
                                              category,
                                              date)
 
 
+@app.callback(
+    Output('state-choropleth','figure'),
+    [Input('crossfilter_date_slider','value')]
+)
+
+def update_state_choropleth(date):
+    date = time.strftime('%Y-%m-%d',time.localtime(date))
+    return plotting.choropleth_state_deaths_density(COVID_STATES_DF,
+                                             'death',
+                                             date)
+
+@app.callback(
+    Output(component_id='state-scatter', component_property='figure'),
+    [Input(component_id='state-choropleth', component_property='hoverData')],
+)
+def update_state_scatter(state_input):
+    try:
+        state = state_input['points'][0]['location']
+    except:
+        state = 'CA'
+    scatter = plotting.generate_state_scatter(COVID_STATES_DF,state)
+    return scatter
+
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=True, use_reloader = True)
+
+    
