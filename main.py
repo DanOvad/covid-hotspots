@@ -71,11 +71,11 @@ app.layout = html.Div(
                 ), #Text div
         
         ]), # close header div
-        html.Div(id='my-hover'),
+        html.Div(id='debug-div'),
         html.Div(id='div-slider',style={'height':'100px'},
             children=[
                 dcc.Slider(
-                    id='crossfilter_date_slider',
+                    id='date-slider',
                     min=min(date_dict),
                     max=max(date_dict),
                     value=max(date_dict),
@@ -152,7 +152,7 @@ app.layout = html.Div(
                             ]
                         ), # close dcc dropdown
                         dcc.Graph(
-                            id='scatter-county',
+                            id='county-scatter',
                             figure = plotting.scatter_deaths_county(
                                 COVID_COUNTIES_DF,
                                 'deaths',
@@ -170,8 +170,8 @@ server = app.server
 ################################################################################
 # Text OUTPUT from HOVER
 @app.callback(
-    Output(component_id='my-hover', component_property='children'),
-    [Input(component_id='crossfilter_date_slider', component_property='value')]
+    Output(component_id='debug-div', component_property='children'),
+    [Input(component_id='date-slider', component_property='value')]
 )
 def update_output_div(date):
     date = time.strftime('%Y-%m-%d',time.localtime(date))
@@ -181,7 +181,7 @@ def update_output_div(date):
 @app.callback(
     Output('county-choropleth','figure'),
     [Input('county-dropdown','value'),
-     Input('crossfilter_date_slider','value')]
+     Input('date-slider','value')]
 )
 
 def update_county_choropleth(category, date):
@@ -193,18 +193,19 @@ def update_county_choropleth(category, date):
 
 # County Scatter
 @app.callback(
-    Output(component_id='scatter-county', component_property='figure'),
+    Output(component_id='county-scatter', component_property='figure'),
     [Input(component_id='county-choropleth', component_property='hoverData')],
     [State(component_id='county-dropdown',component_property='value'),
-    State('crossfilter_date_slider','value')]
+    State('date-slider','value')]
 )
-def update_scatter_counter(fips_input,category,slider_date):
+def update_county_scatter(fips_input,category,slider_date):
     # Convert from epoch time to time struct to string
     slider_date = time.strftime('%Y-%m-%d',time.localtime(slider_date))
     try:
         fips = fips_input['points'][0]['location']
     except:
         fips = '01001'
+        # plot county scatter
     scatter = plotting.scatter_deaths_county(COVID_COUNTIES_DF,category,slider_date,fips)
     return scatter
 
@@ -212,7 +213,7 @@ def update_scatter_counter(fips_input,category,slider_date):
 # State Choropleth
 @app.callback(
     Output('state-choropleth','figure'),
-    [Input('crossfilter_date_slider','value'),
+    [Input('date-slider','value'),
     Input(component_id='state-dropdown',component_property='value')]
 )
 def update_state_choropleth(date,category):
@@ -236,10 +237,14 @@ def update_state_scatter(state_input,category):
         category_tuple = ('hospitalizedIncrease','hospitalizedCurrently')
     else:
         category_tuple = ('deathIncrease','death')
+        
+    # Extract state string from hoverData Dict
     try:
         state = state_input['points'][0]['location']
     except:
         state = 'CA'
+    
+    # Plot State Scatter
     scatter = plotting.plot_scatter_state(COVID_STATES_DF, state, category_tuple)
     return scatter
 

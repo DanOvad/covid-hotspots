@@ -77,7 +77,8 @@ def get_covid_state_data():
         covid_states_df = pd.DataFrame(r.json())
         
         # Set date as datetime format
-        covid_states_df['date'] = pd.to_datetime(covid_states_df.date, format="%Y%m%d")
+        covid_states_df['datetime'] = pd.to_datetime(covid_states_df['date'], format="%Y%m%d")
+        covid_states_df['date'] = covid_states_df['datetime'].map(lambda x:x.strftime('%Y-%m-%d'))
         # set date to index
         #covid_states_df.set_index(keys='date',inplace=True)
         covid_states_df.to_csv(filepath)
