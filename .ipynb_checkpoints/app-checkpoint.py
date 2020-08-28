@@ -134,8 +134,11 @@ def scatter_deaths_states(state):
     fig.add_trace(go.Bar(x=test_df['date'],
             y=test_df['daily'], name="Daily"), secondary_y=False,
         )
-    fig.add_trace(go.Scatter(x=test_df['date'],
-            y=test_df['death'], name="Total"), secondary_y=True,
+    fig.add_trace(secondary_y=True
+            go.Scatter(x=test_df['date'],
+                y=test_df['death'], 
+                name="Total"
+            )
         )
     fig.update_yaxes(title_text="<b>Daily</b> Deaths", secondary_y=False)
     fig.update_yaxes(title_text="<b>Total</b> Deaths to Date", secondary_y=True)

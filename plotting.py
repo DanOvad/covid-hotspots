@@ -24,7 +24,7 @@ import datetime
 
 
 # SCATTER deaths for COUNTY
-def scatter_deaths_county(df,category,fips = '01001'):
+def scatter_deaths_county(df, category, slider_date, fips = '01001'):
     # Create a series of cases by date
     county_mask = (df['fips'] == fips)
 
@@ -45,7 +45,17 @@ def scatter_deaths_county(df,category,fips = '01001'):
               x = county_series.index,
               y = county_series,
               title = f'{county_name},{state_name} {category} by day')
-    scatter.update_layout(height = 600, margin = {"r":40,"t":40,"l":40,"b":40})
+    scatter.update_layout(
+        height = 400, 
+        margin = {"r":40,"t":40,"l":40,"b":40},
+        shapes=[
+            dict(
+              type= 'line',
+              yref= 'paper', y0= 0, y1= 1,
+              xref= 'x', x0= slider_date, x1= slider_date
+            )
+        ]
+    )
     scatter.update_yaxes(title_text=f"<b>Total</b> {category}")
     scatter.update_xaxes(title_text="<b>Date</b>")
     return scatter
@@ -54,44 +64,80 @@ def scatter_deaths_county(df,category,fips = '01001'):
 def choropleth_deaths_county(df, geojson, category, date):
     print("Generating Plot")
     date_mask = (df['date'] == date)
-    median = round(df[date_mask][category].mean(),-1)
-    fig = go.Figure(go.Choropleth(
-        z = df[date_mask][category], # Data to be color-coded
-        zmin=1,
-        zmax=median,
-        geojson = geojson,
-        locations=df[date_mask]['fips'],
-        locationmode = 'geojson-id',
-        hovertext = df[date_mask]['county'],
-        colorscale="Viridis",
-        colorbar_title = f"{category}"
-        #marker_opacity=0.5,
-        #marker_line_width=0
-    ))
+    mean = round(df[date_mask][category].mean(),-1)
+    
+    # Generate Plot
+    fig = go.Figure(
+        go.Choropleth(
+            z = df[date_mask][category], # Data to be color-coded
+            zmin=1,
+            zmax=mean,
+            geojson = geojson,
+            locations=df[date_mask]['fips'],
+            locationmode = 'geojson-id',
+            hovertext = df[date_mask]['county'],
+            colorscale="Viridis",
+            colorbar_title = f"{category}"
+            #marker_opacity=0.5,
+            #marker_line_width=0
+        )
+    )
     fig.update_geos(center = {"lat": 37.0902, "lon": -95.7129},
                    scope = 'usa')
-    fig.update_layout(height=600, title_text = f'Deaths by county on {date}',
-                      margin={"r":5,"t":40,"l":5,"b":40})
+    fig.update_layout(
+        #height = 400,
+        title_text = f'Deaths by county on {date}',
+        margin={"r":5,"t":30,"l":5,"b":5}
+    )
     print("Finished Generating Plot")
     return fig
 
 
 # States
 
-def choropleth_state_deaths_density(covid_states_df, category):
+def choropleth_state_deaths_density(covid_states_df, category, date):
+    # Create a mask to filter the df to only a specific date
+    date_mask = (covid_states_df['date'] == date)
+    # Determine the median of values to plot for legend
+    mean = round(covid_states_df[date_mask][category].mean(),-1)
+    
+    # Create Figure
     fig = go.Figure(data=go.Choropleth(
-        locations=covid_states_df['state'], # Spatial coordinates
-        z = covid_states_df[category].astype(float), # Data to be color-coded
-        locationmode = 'USA-states', # set of locations match entries in `locations`
+        locations=covid_states_df[date_mask]['state'],
+        z = covid_states_df[date_mask][category].astype(float),
+        locationmode = 'USA-states',
         colorscale = 'thermal',
-        colorbar_title = "Total Deaths",
+        colorbar_title = f"Total {category}",
         zmin=0,
-        zmax=6500,
+        zmax=mean,
     ))
 
     fig.update_layout(
-        height = 500,
-        title_text = 'Total Covid-19 Deaths by State',
+        #height = 400,
+        title_text = f'Total Covid-19 {category} by State on {date}',
         geo_scope='usa', # limite map scope to USA
     )
+    return fig
+
+
+def generate_state_scatter(covid_state_df,state):
+    
+    state_mask = (covid_state_df['state'] == state)
+    covid_state_df[state_mask]
+
+    fig = go.Figure()
+    fig = make_subplots(specs=[[{"secondary_y":True}]])
+    fig.update_layout(height=500,title_text="Daily and Total Deaths")
+    fig.add_trace(go.Bar(x=covid_state_df[state_mask]['date'],
+            y=covid_state_df[state_mask]['deathIncrease'], name="deathIncrease"), secondary_y=False,
+        )
+    fig.add_trace(
+            go.Scatter(x=covid_state_df[state_mask]['date'],
+                y=covid_state_df[state_mask]['death'], 
+                name="Total"
+            ),secondary_y=True
+        )
+    fig.update_yaxes(title_text="<b>Daily</b> Deaths", secondary_y=False)
+    fig.update_yaxes(title_text="<b>Total</b> Deaths to Date", secondary_y=True)
+
     return fig

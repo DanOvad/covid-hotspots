@@ -19,10 +19,12 @@ def load_county_geojson():
     # Check if geojson file exists
     if path.exists('data/county_geojson.json'):
         # Load from file
+        print("Pulling geojson from file.")
         with open('data/county_geojson.json','r') as fout:
             county_geojson = json.load(fout)
     else:
         # Download from plotly
+        print("Pulling geojson from Plotly.")
         county_geojson_url = 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json'
         
         with urlopen(county_geojson_url) as response:
@@ -77,7 +79,7 @@ def get_covid_state_data():
         # Set date as datetime format
         covid_states_df['date'] = pd.to_datetime(covid_states_df.date, format="%Y%m%d")
         # set date to index
-        covid_states_df.set_index(keys='date',inplace=True)
+        #covid_states_df.set_index(keys='date',inplace=True)
         covid_states_df.to_csv(filepath)
             
     return covid_states_df
@@ -92,5 +94,5 @@ def generate_slider_dates(df):
 
     # Create a list of dates from max to min, going back 2 weeks each time
     date_list = range(max_date_int, start_date_int, -(14*24*60*60))
-    date_dict = {day:{'label':time.strftime('%Y-%m-%d',time.localtime(day)),'style':{'writing-mode': 'vertical-rl','text-orientation': 'sideways', 'height':'80px'}}  for day in date_list}
+    date_dict = {day:{'label':time.strftime('%Y-%m-%d',time.localtime(day)),'style':{'writing-mode': 'vertical-rl','text-orientation': 'sideways', 'height':'70px'}}  for day in date_list}
     return date_dict
