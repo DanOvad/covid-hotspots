@@ -23,6 +23,14 @@ import time
 import datetime
 
 
+def plot_national(covid_states_df, category='hospitalizedCurrently'):
+    figure = px.bar(data_frame = covid_states_df,
+           x='date',
+           y = category,
+           color='state')
+    return figure
+################################################################################
+# COUNTY
 # SCATTER deaths for COUNTY
 def scatter_deaths_county(df, category, slider_date, fips = '01001'):
     # Create a series of cases by date
@@ -106,9 +114,9 @@ def plot_choropleth_county(df, geojson, category, date):
     print("Finished Generating Plot")
     return fig
 
-
-# States
-
+################################################################################
+# STATES
+# CHOROPLETH for STATES
 def plot_choropleth_state(covid_states_df, date, category='death'):
     # Create a mask to filter the df to only a specific date
     date_mask = (covid_states_df['date'] == date)
@@ -141,6 +149,7 @@ def plot_choropleth_state(covid_states_df, date, category='death'):
     
     return fig
 
+# SCATTER for STATE
 def plot_scatter_state(covid_state_df,state,category_tuple=('deathIncrease','death')):
     daily, cumulative = category_tuple
     
@@ -165,4 +174,17 @@ def plot_scatter_state(covid_state_df,state,category_tuple=('deathIncrease','dea
     fig.update_yaxes(title_text=f"Daily {daily}", secondary_y=False)
     fig.update_yaxes(title_text=f"{cumulative} to Date", secondary_y=True)
 
+    return fig
+
+# Choropleth animation
+def plot_animation(df, category='death'):
+    fig = px.choropleth(data_frame=df,
+                locations='state',
+                color='death',
+                locationmode='USA-states',
+                animation_frame='date',
+                category_orders=animation_date_dict)
+    
+    fig.update_geos(center = {"lat": 37.0902, "lon": -95.7129},
+                    scope = 'usa')
     return fig

@@ -35,6 +35,15 @@ COVID_STATES_DF = data_processing.get_covid_state_data()
 
 date_dict = data_processing.generate_slider_dates(COVID_COUNTIES_DF)
 
+style_dictionary = {'national-stats':{
+                            'textAlign': 'center',
+                            'align-self':'center',
+                            "border":"4px black solid",
+                            "height":100,
+                            "width":323, 
+                            'backgroundColor':'#A99A96'
+                        }}
+
 ################################################################################
 
 # Create Dash object
@@ -71,7 +80,103 @@ app.layout = html.Div(
                 ), #Text div
         
         ]), # close header div
+        html.Br(),
+        html.H4('National Section'),
+        html.Div(id='national-section', children=[
+            html.Div(id='national-stats', className='row', children=[
+                
+                html.Div(className='four columns',
+                        style={'align-content':'center','textAlign': 'center'},
+                        children=[
+                    html.Div(id='div-national-deaths', 
+                        style={
+                            'textAlign': 'center',
+                            'align-self':'center',
+                            'display':'inline-block',
+                            "border":"4px black solid",
+                            "height":100,
+                            "width":323, 
+                            'backgroundColor':'#D6DBDF'
+                        },
+                        children=[
+                            html.H4(
+                                data_processing.generate_state_aggregate_stat(
+                                COVID_STATES_DF,
+                                '2020-06-20',
+                                'death')
+                            ), 
+                            html.H5('Total Deaths')
+                        ]
+                    )
+                ]),
+                html.Div(className='four columns',
+                         style={'align-content':'center','textAlign': 'center'},
+                         children=[
+                    html.Div(id='div-national-cases',
+                        style={
+                            'textAlign': 'center',
+                            'align-self':'center',
+                            'display':'inline-block',
+                            "border":"4px black solid",
+                            "height":100,
+                            "width":323,
+                            'backgroundColor':'#D6DBDF'
+                        },
+                        children=[
+                            html.H4(
+                                data_processing.generate_state_aggregate_stat(
+                                COVID_STATES_DF,
+                                '2020-06-20',
+                                'positive')
+                            ), 
+                            html.H5('Total Positive Cases')
+                        ]
+                    )
+                ]),
+                html.Div(className='four columns',
+                         style={'align-content':'center','textAlign': 'center'},
+                         children=[
+                    html.Div(id='div-national-hospitalizedCurrently',
+                        style={
+                            'textAlign': 'center',
+                            'align-self':'center',
+                            'display':'inline-block',
+                            "border":"4px black solid",
+                            "height":100,
+                            "width":323,
+                            'backgroundColor':'#D6DBDF'
+                            #,'margin':dict(
+                            #    l=50,
+                            #    r=50,
+                            #    b=100,
+                            #    t=100,
+                            #    pad=4
+                            #)
+                        },
+                        children=[
+                            html.H4(
+                                data_processing.generate_state_aggregate_stat(
+                                COVID_STATES_DF,
+                                '2020-06-20',
+                                'hospitalizedCurrently')
+                            ),
+                            html.H5('Current Hospitalization')
+                        ]
+                    )
+                ])
+            ]) # close national stats div
+            ,html.Div(id='national-graphs', className='row',children=[
+                dcc.Graph(id='graph-national-deaths', className='four columns'),
+                dcc.Graph(id='graph-national-cases', className='four columns'),
+                dcc.Graph(id='graph-national-hospitalizedCurrently', className='four columns')
+            ])
+            
+        ]), # close national section div
+            
+        html.Br(),
+        html.Br(),
         html.Div(id='debug-div'),
+        html.Br(),
         html.Div(id='div-slider',style={'height':'100px'},
             children=[
                 dcc.Slider(
@@ -84,7 +189,7 @@ app.layout = html.Div(
                 ) # slider dcc])
             ]
         ), # slider div
-        
+        html.H4('State Section'),
         html.Div(id='state-section',className='row',
             children=[
                 html.Div(id='state-choropleth-div',className='six columns',
@@ -125,7 +230,8 @@ app.layout = html.Div(
         ),
         html.Br(),
         # open div for county graphs
-        html.Div(id='county-section',className="row",
+        html.H4('County Section'),
+        html.Div(id='county-section', className="row",
             children=[
                 html.Div(className='six columns',
                     children=[ # county choropleth div
