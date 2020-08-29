@@ -52,7 +52,7 @@ def get_covid_county_data():
         print("Pulling county data from github.")
         url = 'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv'
         df = pd.read_csv(url)
-        df.to_csv(filepath)
+        df.to_csv(filepath, index=False)
     
     # Reassign our fips to be a string of length 5
     df['fipsnum'] = df['fips']
@@ -74,6 +74,8 @@ def get_covid_state_data():
         # Coronavirus data by state from covidtracking API
         states_url = "https://covidtracking.com/api/states/daily"
         r = requests.get(states_url)
+        if not r.okay:
+            print("Request error")
         covid_states_df = pd.DataFrame(r.json())
         
         # Set date as datetime format
@@ -81,7 +83,7 @@ def get_covid_state_data():
         covid_states_df['date'] = covid_states_df['datetime'].map(lambda x:x.strftime('%Y-%m-%d'))
         # set date to index
         #covid_states_df.set_index(keys='date',inplace=True)
-        covid_states_df.to_csv(filepath)
+        covid_states_df.to_csv(filepath, index=False)
             
     return covid_states_df
 
@@ -92,6 +94,33 @@ def generate_slider_dates(df):
 
     # Get max date from df
     max_date_int = int(time.mktime(df['date'].max().timetuple()))
+
+    # Create a list of dates from max to min, going back 2 weeks each time
+    date_list = range(max_date_int, start_date_int, -(14*24*60*60))
+    date_dict = {day:{
+        'label':time.strftime('%Y-%m-%d',time.localtime(day)),
+        'style':{
+            'writing-mode': 'vertical-lr',
+            #'text-orientation': 'sideways', 
+            'height':'70px',
+            'font-size':12,
+            'color':'#000000'}}  for day in date_list}
+    return date_dict
+
+
+
+def generate_state_aggregate_stat(covid_states_df, date, category):
+    date_mask = (covid_states_df['date'] == date)
+    stat = int(covid_states_df[date_mask][category].sum())
+    return f"{stat:,d}"
+
+
+def generate_animation_dates(df):
+    
+    # Hardcode a start date
+    start_date = '2020-03-01'
+    max_date = df['date'].max()
+    
 
     # Create a list of dates from max to min, going back 2 weeks each time
     date_list = range(max_date_int, start_date_int, -(14*24*60*60))
