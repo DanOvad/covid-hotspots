@@ -68,7 +68,7 @@ def scatter_deaths_county(df, category, slider_date, fips = '01001'):
         title=f'{county_name},{state_name} {category} by day',
         height = 400, 
         margin = {"r":40,"t":40,"l":40,"b":40},
-        paper_bgcolor='rgb(200,200,200)',
+        paper_bgcolor='#D6DBDF',#'rgb(200,200,200)',
         shapes=[
             dict(
               type= 'line',
@@ -107,7 +107,7 @@ def plot_choropleth_county(df, geojson, category, date):
                    scope = 'usa')
     fig.update_layout(
         #height = 400,
-        paper_bgcolor='rgb(200,200,200)',
+        paper_bgcolor='#D6DBDF',
         title_text = f'Deaths by county on {date}',
         margin={"r":5,"t":30,"l":5,"b":5}
     )
@@ -141,7 +141,7 @@ def plot_choropleth_state(covid_states_df, date, category='death'):
         margin={"r":5,"t":30,"l":5,"b":5},
         title_text = f'Total Covid-19 {category} by State on {date}',
         geo_scope='usa',
-        paper_bgcolor='rgb(200,200,200)',
+        paper_bgcolor='#D6DBDF',
         plot_bgcolor='rgb(200,200,200)'
     )
     
@@ -161,7 +161,7 @@ def plot_scatter_state(covid_state_df,state,category_tuple=('deathIncrease','dea
 
     fig = go.Figure()
     fig = make_subplots(specs=[[{"secondary_y":True}]])
-    fig.update_layout(height=400,title_text="Daily and Total Deaths",paper_bgcolor='rgb(200,200,200)')
+    fig.update_layout(height=400,title_text="Daily and Total Deaths",paper_bgcolor='#D6DBDF')
     fig.add_trace(go.Bar(x=covid_state_df[state_mask]['date'],
             y=covid_state_df[state_mask][daily], name=daily), secondary_y=False,
         )

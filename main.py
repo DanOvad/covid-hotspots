@@ -34,15 +34,20 @@ COVID_COUNTIES_DF = data_processing.get_covid_county_data()
 COVID_STATES_DF = data_processing.get_covid_state_data()
 
 date_dict = data_processing.generate_slider_dates(COVID_COUNTIES_DF)
+max_date_str = time.strftime('%Y-%m-%d',time.localtime(max(date_dict)))
 
-style_dictionary = {'national-stats':{
+style_dictionary = {'national-stats-div':{
                             'textAlign': 'center',
                             'align-self':'center',
                             "border":"4px black solid",
                             "height":100,
                             "width":323, 
                             'backgroundColor':'#A99A96'
-                        }}
+                        },
+                   'national-stats-item-div':{
+                       'align-content':'center',
+                       'textAlign': 'center'}
+                   }
 
 ################################################################################
 
@@ -84,7 +89,7 @@ app.layout = html.Div(
         html.H4('National Section'),
         html.Div(id='national-section', children=[
             html.Div(id='national-stats', className='row', children=[
-                
+                # Alignment is handled on this Div below.
                 html.Div(className='four columns',
                         style={'align-content':'center','textAlign': 'center'},
                         children=[
@@ -99,11 +104,11 @@ app.layout = html.Div(
                             'backgroundColor':'#D6DBDF'
                         },
                         children=[
-                            html.H4(
-                                data_processing.generate_state_aggregate_stat(
-                                COVID_STATES_DF,
-                                '2020-06-20',
-                                'death')
+                            html.H4(id='H4-national-deaths',
+                                children=data_processing.generate_state_aggregate_stat(
+                                    COVID_STATES_DF,
+                                    max_date_str,
+                                    'death')
                             ), 
                             html.H5('Total Deaths')
                         ]
@@ -123,11 +128,11 @@ app.layout = html.Div(
                             'backgroundColor':'#D6DBDF'
                         },
                         children=[
-                            html.H4(
-                                data_processing.generate_state_aggregate_stat(
-                                COVID_STATES_DF,
-                                '2020-06-20',
-                                'positive')
+                            html.H4(id='H4-national-cases',
+                                children=data_processing.generate_state_aggregate_stat(
+                                    COVID_STATES_DF,
+                                    max_date_str,
+                                    'positive')
                             ), 
                             html.H5('Total Positive Cases')
                         ]
@@ -154,11 +159,11 @@ app.layout = html.Div(
                             #)
                         },
                         children=[
-                            html.H4(
-                                data_processing.generate_state_aggregate_stat(
-                                COVID_STATES_DF,
-                                '2020-06-20',
-                                'hospitalizedCurrently')
+                            html.H4(id='H4-national-hospitalized',
+                                children=data_processing.generate_state_aggregate_stat(
+                                    COVID_STATES_DF,
+                                    max_date_str,
+                                    'hospitalizedCurrently')
                             ),
                             html.H5('Current Hospitalization')
                         ]
@@ -166,9 +171,14 @@ app.layout = html.Div(
                 ])
             ]) # close national stats div
             ,html.Div(id='national-graphs', className='row',children=[
-                dcc.Graph(id='graph-national-deaths', className='four columns'),
-                dcc.Graph(id='graph-national-cases', className='four columns'),
-                dcc.Graph(id='graph-national-hospitalizedCurrently', className='four columns')
+                dcc.Graph(id='graph-national-deaths', className='four columns', 
+                         figure=plotting.plot_national(COVID_STATES_DF,'death')),
+                dcc.Graph(id='graph-national-cases', className='four columns',
+                         figure=plotting.plot_national(COVID_STATES_DF,'positive')),
+                dcc.Graph(id='graph-national-hospitalizedCurrently', className='four columns',
+                         figure=plotting.plot_national(
+                             COVID_STATES_DF,
+                             'hospitalizedCurrently'))
             ])
             
         ]), # close national section div
@@ -190,7 +200,7 @@ app.layout = html.Div(
             ]
         ), # slider div
         html.H4('State Section'),
-        html.Div(id='state-section',className='row',
+        html.Div(id='state-section',className='row',style={'textAlign':'center'},
             children=[
                 html.Div(id='state-choropleth-div',className='six columns',
                     children=[
@@ -198,7 +208,7 @@ app.layout = html.Div(
                             id='state-choropleth', 
                             figure=plotting.plot_choropleth_state(
                                 COVID_STATES_DF,
-                                time.strftime('%Y-%m-%d',time.localtime(max(date_dict))),
+                                max_date_str,
                                 'death'
                             )
                         )
@@ -241,7 +251,7 @@ app.layout = html.Div(
                                 COVID_COUNTIES_DF,
                                 COUNTY_GEOJSON,
                                 'deaths',
-                                date = time.strftime('%Y-%m-%d',time.localtime(max(date_dict)))
+                                date = max_date_str
                             )
                         )
                     ] 
@@ -262,7 +272,7 @@ app.layout = html.Div(
                             figure = plotting.scatter_deaths_county(
                                 COVID_COUNTIES_DF,
                                 'deaths',
-                                time.strftime('%Y-%m-%d',time.localtime(max(date_dict))),
+                                max_date_str,
                                 '01001'
                             )
                         ) # close dcc graph
@@ -283,6 +293,27 @@ def update_output_div(date):
     date = time.strftime('%Y-%m-%d',time.localtime(date))
     return 'You\'ve entered "{}"'.format(date)
 
+
+
+# National Statistics
+@app.callback(
+    [Output('H4-national-deaths','children'),
+    Output('H4-national-cases','children'),
+    Output('H4-national-hospitalized','children')],
+    [Input(component_id='date-slider', component_property='value')]
+)
+def update_national_stats(date):
+
+    date = time.strftime('%Y-%m-%d',time.localtime(date))
+    death=data_processing.generate_state_aggregate_stat(
+        COVID_STATES_DF,date,'death')
+    positive=data_processing.generate_state_aggregate_stat(
+        COVID_STATES_DF,date,'positive')
+    hospitalizedCurrently=data_processing.generate_state_aggregate_stat(
+        COVID_STATES_DF,date,'hospitalizedCurrently')
+    return death, positive, hospitalizedCurrently
+    
+    
 # County Choropleth
 @app.callback(
     Output('county-choropleth','figure'),
