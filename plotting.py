@@ -90,8 +90,8 @@ def plot_choropleth_county(df, geojson, category, date):
     fig = go.Figure(
         go.Choropleth(
             z = df[date_mask][category], # Data to be color-coded
-            zmin=1,
-            zmax=mean,
+            #zmin=1,
+            #zmax=mean,
             geojson = geojson,
             locations=df[date_mask]['fips'],
             locationmode = 'geojson-id',

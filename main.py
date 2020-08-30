@@ -65,12 +65,6 @@ style_dict = {
         "align-content":"center",
         "border":"1px black solid",
         "textAlign": "center"
-        #"margin-top":"10px",
-        #"margin-right":"10px",
-        #"margin-bottom":"10px",
-        #"margin-left":"10px",
-        #"margin":"10px 10px 10px 10px"
-        
     }
 }
 
@@ -324,9 +318,7 @@ def update_output_div(date):
 
 # National Statistics
 @app.callback(
-    [Output("H4-national-deaths","children"),
-    Output("H4-national-cases","children"),
-    Output("H4-national-hospitalized","children")],
+    Output("H4-national-deaths","children"),
     [Input(component_id="date-slider", component_property="value")]
 )
 def update_national_stats(date):
@@ -334,11 +326,33 @@ def update_national_stats(date):
     date = time.strftime("%Y-%m-%d",time.localtime(date))
     death=data_processing.generate_state_aggregate_stat(
         COVID_STATES_DF,date,"death")
+    return death
+
+# National Statistics
+@app.callback(
+    Output("H4-national-cases","children"),
+    [Input(component_id="date-slider", component_property="value")]
+)
+def update_national_stats(date):
+
+    date = time.strftime("%Y-%m-%d",time.localtime(date))
+    
     positive=data_processing.generate_state_aggregate_stat(
         COVID_STATES_DF,date,"positive")
+    
+    return positive
+
+# National Statistics
+@app.callback(
+    Output("H4-national-hospitalized","children"),
+    [Input(component_id="date-slider", component_property="value")]
+)
+def update_national_stats(date):
+
+    date = time.strftime("%Y-%m-%d",time.localtime(date))
     hospitalizedCurrently=data_processing.generate_state_aggregate_stat(
         COVID_STATES_DF,date,"hospitalizedCurrently")
-    return death, positive, hospitalizedCurrently
+    return hospitalizedCurrently
     
     
 # County Choropleth

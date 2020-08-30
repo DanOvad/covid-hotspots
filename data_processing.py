@@ -71,12 +71,11 @@ def get_covid_state_data():
         covid_states_df = pd.read_csv(filepath)
     else:
         print("Pulling state data from Covid Tracking API")
+        
         # Coronavirus data by state from covidtracking API
         states_url = "https://covidtracking.com/api/states/daily"
-        r = requests.get(states_url)
-        if not r.okay:
-            print("Request error")
-        covid_states_df = pd.DataFrame(r.json())
+        with requests.get(states_url) as response:
+            covid_states_df = pd.DataFrame(response.json())
         
         # Set date as datetime format
         covid_states_df['datetime'] = pd.to_datetime(covid_states_df['date'], format="%Y%m%d")
