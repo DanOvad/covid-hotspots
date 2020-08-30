@@ -13,7 +13,7 @@ from os import path
 
 
 
-# Get map of US Counties. Here we need FIPS codes and polygons
+# Get map of US Counties. Here we need FIPS codes and polygons.
 
 def load_county_geojson():
     # Check if geojson file exists
@@ -35,7 +35,7 @@ def load_county_geojson():
             json.dump(county_geojson, fout)
     return county_geojson
 
-    
+# Get covid data at a county level.
 def get_covid_county_data():
     '''Function to return covid county data from nytimes github\n
     https://raw.githubusercontent.com/nytimes/covid-19-data'''
@@ -107,11 +107,13 @@ def generate_slider_dates(df):
     return date_dict
 
 
-
+################################################################################
+# National State Data
 def generate_state_aggregate_stat(covid_states_df, date, category):
     date_mask = (covid_states_df['date'] == date)
     stat = int(covid_states_df[date_mask][category].sum())
     return f"{stat:,d}"
+
 
 
 def generate_animation_dates(df):
@@ -125,3 +127,56 @@ def generate_animation_dates(df):
     date_list = range(max_date_int, start_date_int, -(14*24*60*60))
     date_dict = {day:{'label':time.strftime('%Y-%m-%d',time.localtime(day)),'style':{'writing-mode': 'vertical-rl','text-orientation': 'sideways', 'height':'70px'}}  for day in date_list}
     return date_dict
+
+
+
+################################################################################
+# Census Data
+
+
+# Function to generate fips from a state int and county int.
+def generate_fips(state_fips, county_fips):
+    state_str, county_str = str(state_fips), str(county_fips)
+    
+    # Check length of state code and append 0's if necessary.
+    if len(state_str) == 1:
+        state_str = "0"+state_str
+        
+    # Check length of county code and append 0's if necessary.
+    if len(county_str) == 1:
+        county_str = "00"+county_str
+    elif len(county_str) == 2:
+        county_str = "0"+county_str
+        
+    return state_str+county_str
+
+def get_census_county_data():
+    # URL coming from census.gov as ISO encoded csv
+    url = 'https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/counties/totals/co-est2019-alldata.csv'
+    
+    # Read in the data to dataframe
+    census_df = pd.read_csv(url, encoding = "ISO-8859-1")
+    
+    # Define features
+    features = ['SUMLEV',
+                'REGION',
+                'DIVISION',
+                'STATE',
+                'COUNTY',
+                'STNAME',
+                'CTYNAME',
+                'POPESTIMATE2019',
+                'CENSUS2010POP']
+    # Use apply across rows to generate fips codes.
+    census_df['FIPS'] = census_df[['STATE','COUNTY']].apply(
+        lambda x:generate_fips(
+            x['STATE'],
+            x['COUNTY']
+        ), axis = 1
+    )
+
+    # Add the new column to our features.
+    if 'FIPS' not in features:
+        features.append('FIPS')
+    
+    return census_df[features]

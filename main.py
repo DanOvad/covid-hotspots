@@ -22,9 +22,9 @@ from dash.exceptions import PreventUpdate
 import time
 import datetime
 
-# Custom libraries
-import data_processing
-import plotting
+# Custom module
+from modules import data_processing
+from modules import plotting
 
 # Get county geojson for county polygones
 COUNTY_GEOJSON = data_processing.load_county_geojson()
