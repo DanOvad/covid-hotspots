@@ -275,10 +275,19 @@ app.layout = html.Div(
                     children=[
                         dcc.Dropdown(
                             id="county-dropdown",
-                            value="deaths",
+                            value="cases_14MA",
                             options=[
-                                {"label":"deaths","value":"deaths"},
-                                {"label":"cases","value":"cases"}
+                                {"label":"deaths", "value":"deaths"},
+                                {"label":"cases", "value":"cases"},
+                                {"label":"casesPerMillion", "value":"casesPerMillion"},
+                                {"label":"deathsPerMillion", "value":"deathsPerMillion"},
+                                {"label":"cases_diff", "value":"case_diff"},
+                                {"label":"death_diff", "value":"death_diff"},
+                                #{"label":"log_cases", "value":"log_cases"},
+                                #{"label":"log_deaths", "value":"log_deaths"},
+                                #{"label":"log_casesPerMillion", "value":"log_casesPerMillion"},
+                                #{"label":"log_deathsPerMillion", "value":"log_deathsPerMillion"},
+                                {"label":"cases_14MA", "value":"cases_14MA"}
                             ]
                         ), # close dcc dropdown
                         dcc.Graph(

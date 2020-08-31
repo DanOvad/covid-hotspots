@@ -84,14 +84,15 @@ def scatter_deaths_county(df, category, slider_date, fips = '01001'):
 def plot_choropleth_county(df, geojson, category, date):
     print("Generating Plot")
     date_mask = (df['date'] == date)
-    mean = round(df[date_mask][category].mean(),-1)
+    colorscale_max = round(df[date_mask][category].quantile(0.975),-1)
+    colorscale_min = round(df[date_mask][category].quantile(0.1),-1)
     
     # Generate Plot
     fig = go.Figure(
         go.Choropleth(
             z = df[date_mask][category], # Data to be color-coded
-            #zmin=1,
-            #zmax=mean,
+            zmin=colorscale_min,
+            zmax=colorscale_max,
             geojson = geojson,
             locations=df[date_mask]['fips'],
             locationmode = 'geojson-id',

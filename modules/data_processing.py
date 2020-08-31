@@ -104,20 +104,63 @@ def get_covid_county_data():
     filepath = f'data/covid_counties_{today}.csv'
     if path.exists(filepath):
         print("Pulling county data from file.")
+        # Read in data from file
         df = pd.read_csv(filepath)
     else:
         print("Pulling county data from github.")
+        # NYT covid-19 github url
         url = 'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv'
+        
+        # Read in data from github
         df = pd.read_csv(url)
+        
+        # Write to file
         df.to_csv(filepath, index=False)
     
     # Reassign our fips to be a string of length 5
-    #df['fipsnum'] = df['fips']
     df['fips'] = df['fips'].astype(str).apply(lambda x: '0'+x[:4] if len(x) == 6 else x[:5])
+    
     # Set date format
     df['date'] = pd.to_datetime(df['date'], format = '%Y-%m-%d')
+    
     # Create log_deaths column
-    df['log_deaths'] = np.log(df['deaths'] + 1)
+    #df['log_deaths'] = np.log(df['deaths'] + 1)
+    
+    # Create log_cases column
+    #df['log_cases'] = np.log(df['cases'] + 1)
+    
+    
+    # Get Census data and Merge dataframes on fips
+    df = df.merge(get_census_county_data(),
+                    how='left',
+                    left_on='fips',
+                    right_on='FIPS')
+    
+    # Cases Per Million
+    df['casesPerMillion']=df['cases']/df['POPESTIMATE2019']*1000000
+    #df['log_casesPerMillion']= np.log(df['casesPerMillion']+1)
+    
+    # Deaths Per Million
+    df['deathsPerMillion']=df['deaths']/df['POPESTIMATE2019']*1000000
+    #df['log_deathsPerMillion']= np.log(df['deathsPerMillion']+1)
+    
+    # New Cases by day
+    #df['case_diff'] = df.sort_values(by=['fips','state','county','date'])['cases'].diff()
+    df['case_diff'] = df.groupby(
+            by = ['fips','county','state'])['cases'].diff()
+    
+    #df['case_pm_diff'] = df.sort_values(by=['fips','state','county','date'])['casesPerMillion'].diff()
+    # New Deaths by day
+    df['death_diff'] = df.groupby(
+            by = ['fips','county','state'])['deaths'].diff()
+    
+    
+    df["cases_14MA"] = df.groupby(
+    by = ['fips','county','state'],as_index=False)['case_diff'].rolling(14).mean().reset_index(level=0, drop=True)
+
+    #df["cases_14MA"] = cases_14MA.reset_index(level=0, drop=True)
+    
+    
     return df
 
 ################################################################################
