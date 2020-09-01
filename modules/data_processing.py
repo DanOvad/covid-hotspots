@@ -183,7 +183,7 @@ def get_covid_county_data():
 # State Covid Data
 
 # Get state covid data from Covid Tracking Project's API
-def get_covid_state_data(cache_mode = 0):
+def get_covid_state_data(cache_mode = 1):
     # Cache mode 
     # 0 = No cache, 
     # 1 = Read only cache
