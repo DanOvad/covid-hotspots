@@ -106,60 +106,76 @@ def get_covid_county_data():
         print("Pulling county data from file.")
         # Read in data from file
         df = pd.read_csv(filepath)
+        
+        # Set date format
+        df['date'] = pd.to_datetime(df['date'], format = '%Y-%m-%d')
+        
+        # Reassign our fips to be a string of length 5
+        df['fips'] = df['fips'].astype(str).apply(lambda x: '0'+x[:4] if len(x) == 6 else x[:5])
     else:
         print("Pulling county data from github.")
         # NYT covid-19 github url
         url = 'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv'
         
+        x0 = time.time()
         # Read in data from github
         df = pd.read_csv(url)
+        print(f"{time.time()-x0} for Read")
+        
+        # Reassign our fips to be a string of length 5
+        df['fips'] = df['fips'].astype(str).apply(lambda x: '0'+x[:4] if len(x) == 6 else x[:5])
+
+        # Set date format
+        df['date'] = pd.to_datetime(df['date'], format = '%Y-%m-%d')
+
+        # Create log_deaths column
+        #df['log_deaths'] = np.log(df['deaths'] + 1)
+
+        # Create log_cases column
+        #df['log_cases'] = np.log(df['cases'] + 1)
+
+        x0 = time.time()
+        # Get Census data and Merge dataframes on fips
+        df = df.merge(get_census_county_data(),
+                        how='left',
+                        left_on='fips',
+                        right_on='FIPS')
+        print(f"{time.time()-x0} for census merge")
+        x0 = time.time()
+        # Cases Per Million
+        df['casesPerMillion']=df['cases']/df['POPESTIMATE2019']*1000000
+        #df['log_casesPerMillion']= np.log(df['casesPerMillion']+1)
+
+        # Deaths Per Million
+        df['deathsPerMillion']=df['deaths']/df['POPESTIMATE2019']*1000000
+        #df['log_deathsPerMillion']= np.log(df['deathsPerMillion']+1)
+        print(f"{time.time()-x0} for capita")
+        
+        # New Cases by day
+        #df['case_diff'] = df.sort_values(by=['fips','state','county','date'])['cases'].diff()
+        
+        x0 = time.time()
+        df['case_diff'] = df.groupby(
+                by = ['fips','county','state'])['cases'].diff()
+
+        #df['case_pm_diff'] = df.sort_values(by=['fips','state','county','date'])['casesPerMillion'].diff()
+        # New Deaths by day
+        df['death_diff'] = df.groupby(
+                by = ['fips','county','state'])['deaths'].diff()
+        print(f"{time.time()-x0} for diff")
+        
+        x0 = time.time()
+        df["cases_14MA"] = df.groupby(
+            by=['fips','county','state'], 
+            as_index=False)['case_diff'].rolling(14).mean().reset_index(level=0, drop=True)
+
+        df["deaths_14MA"] = df.groupby(
+            by=['fips','county','state'], 
+            as_index=False)['death_diff'].rolling(14).mean().reset_index(level=0, drop=True)
+        print(f"{time.time()-x0} for MA")
         
         # Write to file
         df.to_csv(filepath, index=False)
-    
-    # Reassign our fips to be a string of length 5
-    df['fips'] = df['fips'].astype(str).apply(lambda x: '0'+x[:4] if len(x) == 6 else x[:5])
-    
-    # Set date format
-    df['date'] = pd.to_datetime(df['date'], format = '%Y-%m-%d')
-    
-    # Create log_deaths column
-    #df['log_deaths'] = np.log(df['deaths'] + 1)
-    
-    # Create log_cases column
-    #df['log_cases'] = np.log(df['cases'] + 1)
-    
-    
-    # Get Census data and Merge dataframes on fips
-    df = df.merge(get_census_county_data(),
-                    how='left',
-                    left_on='fips',
-                    right_on='FIPS')
-    
-    # Cases Per Million
-    df['casesPerMillion']=df['cases']/df['POPESTIMATE2019']*1000000
-    #df['log_casesPerMillion']= np.log(df['casesPerMillion']+1)
-    
-    # Deaths Per Million
-    df['deathsPerMillion']=df['deaths']/df['POPESTIMATE2019']*1000000
-    #df['log_deathsPerMillion']= np.log(df['deathsPerMillion']+1)
-    
-    # New Cases by day
-    #df['case_diff'] = df.sort_values(by=['fips','state','county','date'])['cases'].diff()
-    df['case_diff'] = df.groupby(
-            by = ['fips','county','state'])['cases'].diff()
-    
-    #df['case_pm_diff'] = df.sort_values(by=['fips','state','county','date'])['casesPerMillion'].diff()
-    # New Deaths by day
-    df['death_diff'] = df.groupby(
-            by = ['fips','county','state'])['deaths'].diff()
-    
-    
-    df["cases_14MA"] = df.groupby(
-    by = ['fips','county','state'],as_index=False)['case_diff'].rolling(14).mean().reset_index(level=0, drop=True)
-
-    #df["cases_14MA"] = cases_14MA.reset_index(level=0, drop=True)
-    
     
     return df
 
@@ -167,26 +183,72 @@ def get_covid_county_data():
 # State Covid Data
 
 # Get state covid data from Covid Tracking Project's API
-def get_covid_state_data():
+def get_covid_state_data(cache_mode = 0):
+    # Cache mode 
+    # 0 = No cache, 
+    # 1 = Read only cache
+    # 2 = Read/Write cache, 
+    
     today = time.strftime('%Y%m%d')
     filepath = f'data/covid_states_{today}.csv'
-    if path.exists(filepath):
+    
+    if path.exists(filepath) & cache_mode in (1,2):
         print("Pulling state data from file.")
         covid_states_df = pd.read_csv(filepath)
+        
+        # Data Cleaning
+        #covid_states_df['date'] = pd.to_datetime(covid_states_df['date'], format="%Y-%m-%d")
+        
     else:
         print("Pulling state data from Covid Tracking API")
         
         # Coronavirus data by state from covidtracking API
         states_url = "https://covidtracking.com/api/states/daily"
+        t0 = time.time()
         with requests.get(states_url) as response:
-            covid_states_df = pd.DataFrame(response.json())
+            covid_states_df = pd.DataFrame.from_records(
+                response.json(),
+                index = range(len(response.json()))
+            )
+        
+        # Pull from COVID Tracking API
+        t0 = time.time()
+        #with urlopen(states_url) as response:
+        #    covid_states_json = json.load(response)
+        print(f"{time.time()-t0} to pull data")
+        
+        t0 = time.time()
+        #covid_states_df = pd.DataFrame(covid_states_json)
+        print(f"{time.time()-t0} to df data")
         
         # Set date as datetime format
-        covid_states_df['datetime'] = pd.to_datetime(covid_states_df['date'], format="%Y%m%d")
-        covid_states_df['date'] = covid_states_df['datetime'].map(lambda x:x.strftime('%Y-%m-%d'))
+        covid_states_df['date'] = pd.to_datetime(covid_states_df['date'], format="%Y%m%d")
+        #covid_states_df['date'] = covid_states_df['datetime'].map(lambda x:x.strftime('%Y-%m-%d'))
         # set date to index
         #covid_states_df.set_index(keys='date',inplace=True)
-        covid_states_df.to_csv(filepath, index=False)
+        
+        state_pop = pd.read_csv('data/tbl_states.csv')
+        
+        covid_states_df = covid_states_df.merge(state_pop, 
+                              how='left',
+                              left_on='state',
+                              right_on='state')
+        
+        covid_states_df['case_pm'] = covid_states_df['positive']/covid_states_df['Pop']*1000000
+        covid_states_df['death_pm'] = covid_states_df['death']/covid_states_df['Pop']*1000000
+        
+        covid_states_df["deaths_14MA"] = covid_states_df.groupby(
+            by=['state'], 
+            as_index=False
+        )['deathIncrease'].rolling(14).mean().reset_index(level=0, drop=True)
+        
+        covid_states_df["cases_14MA"] = covid_states_df.groupby(
+            by=['state'], 
+            as_index=False
+        )['positiveIncrease'].rolling(14).mean().reset_index(level=0, drop=True)
+        
+        if cache_mode == 2:
+            covid_states_df.to_csv(filepath, index=False)
             
     return covid_states_df
 
@@ -224,16 +286,4 @@ def generate_state_aggregate_stat(covid_states_df, date, category):
 ################################################################################
 # Other
 
-
-def generate_animation_dates(df):
-    
-    # Hardcode a start date
-    start_date = '2020-03-01'
-    max_date = df['date'].max()
-    
-
-    # Create a list of dates from max to min, going back 2 weeks each time
-    date_list = range(max_date_int, start_date_int, -(14*24*60*60))
-    date_dict = {day:{'label':time.strftime('%Y-%m-%d',time.localtime(day)),'style':{'writing-mode': 'vertical-rl','text-orientation': 'sideways', 'height':'70px'}}  for day in date_list}
-    return date_dict
 

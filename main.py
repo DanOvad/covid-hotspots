@@ -172,22 +172,7 @@ app.layout = html.Div(
                           figure=plotting.plot_national(COVID_STATES_DF,"hospitalizedCurrently"))
                 ])
             ]) # close national stats div
-            ,html.Div(id="national-graphs", className="row",children=[
-                #dcc.Graph(id="graph-national-deaths", 
-                #          className="four columns", 
-                #          style=style_dict['graphs'],
-                #          figure=plotting.plot_national(COVID_STATES_DF,"death")),
-                #dcc.Graph(id="graph-national-cases", 
-                #          className="four columns",
-                #          style=style_dict['graphs'],
-                #          figure=plotting.plot_national(COVID_STATES_DF,"positive")),
-                #dcc.Graph(id="graph-national-hospitalizedCurrently", 
-                #          className="four columns",
-                #          style=style_dict['graphs'],
-                #          figure=plotting.plot_national(
-                #             COVID_STATES_DF,
-                #             "hospitalizedCurrently"))
-            ])
+            ,html.Div(id="national-graphs", className="row",children=[])
             
         ]), # close national section div
             
@@ -277,17 +262,18 @@ app.layout = html.Div(
                             id="county-dropdown",
                             value="cases_14MA",
                             options=[
-                                {"label":"deaths", "value":"deaths"},
-                                {"label":"cases", "value":"cases"},
-                                {"label":"casesPerMillion", "value":"casesPerMillion"},
-                                {"label":"deathsPerMillion", "value":"deathsPerMillion"},
-                                {"label":"cases_diff", "value":"case_diff"},
-                                {"label":"death_diff", "value":"death_diff"},
+                                {"label":"Total deaths", "value":"deaths"},
+                                {"label":"Total cases", "value":"cases"},
+                                {"label":"Cases per million", "value":"casesPerMillion"},
+                                {"label":"Deaths per million", "value":"deathsPerMillion"},
+                                {"label":"Daily cases", "value":"case_diff"},
+                                {"label":"Daily deaths", "value":"death_diff"},
                                 #{"label":"log_cases", "value":"log_cases"},
                                 #{"label":"log_deaths", "value":"log_deaths"},
                                 #{"label":"log_casesPerMillion", "value":"log_casesPerMillion"},
                                 #{"label":"log_deathsPerMillion", "value":"log_deathsPerMillion"},
-                                {"label":"cases_14MA", "value":"cases_14MA"}
+                                {"label":"14-day MA of daily cases", "value":"cases_14MA"},
+                                {"label":"14-day MA of daily deaths", "value":"deaths_14MA"}
                             ]
                         ), # close dcc dropdown
                         dcc.Graph(

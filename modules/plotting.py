@@ -24,6 +24,7 @@ import datetime
 
 
 def plot_national(covid_states_df, category='hospitalizedCurrently'):
+    print("Generating National Plots")
     figure = px.bar(data_frame = covid_states_df,
            x='date',
            y = category,
@@ -36,11 +37,13 @@ def plot_national(covid_states_df, category='hospitalizedCurrently'):
         #    x=0.01
         #)
     )
+    print("Finished Plot")
     return figure
 ################################################################################
 # COUNTY
 # SCATTER deaths for COUNTY
 def scatter_deaths_county(df, category, slider_date, fips = '01001'):
+    print("Generating County Scatter Plot")
     # Create a county mask to extract stats across dates.
     county_mask = (df['fips'] == fips)
 
@@ -78,11 +81,12 @@ def scatter_deaths_county(df, category, slider_date, fips = '01001'):
     )
     fig.update_yaxes(title_text=f"<b>Total</b> {category}")
     fig.update_xaxes(title_text="<b>Date</b>")
+    print("Finished Plot")
     return fig
 
 # CHOROPLETH deaths for COUNTY
 def plot_choropleth_county(df, geojson, category, date):
-    print("Generating Plot")
+    print("Generating County Choropleth Plot")
     date_mask = (df['date'] == date)
     colorscale_max = round(df[date_mask][category].quantile(0.975),-1)
     colorscale_min = round(df[date_mask][category].quantile(0.1),-1)
@@ -122,6 +126,7 @@ def plot_choropleth_county(df, geojson, category, date):
 # STATES
 # CHOROPLETH for STATES
 def plot_choropleth_state(covid_states_df, date, category='death'):
+    print("Generating State Choropleth Plot")
     # Create a mask to filter the df to only a specific date
     date_mask = (covid_states_df['date'] == date)
     # Determine the median of values to plot for legend
@@ -158,11 +163,12 @@ def plot_choropleth_state(covid_states_df, date, category='death'):
         plot_bgcolor='#DCDCDC'
         
     )
-    
+    print("Finished Plot")
     return fig
 
 # SCATTER for STATE
 def plot_scatter_state(covid_state_df,state,category_tuple=('deathIncrease','death')):
+    print("Generating State Scatter Plot")
     daily, cumulative = category_tuple
     
     #daily = category_list[0]
@@ -196,18 +202,44 @@ def plot_scatter_state(covid_state_df,state,category_tuple=('deathIncrease','dea
     )
     fig.update_yaxes(title_text=f"{daily}", secondary_y=False)
     fig.update_yaxes(title_text=f"{cumulative}", secondary_y=True)
-
+    print("Finished Plot")
     return fig
+
+
+def generate_animation_dates(df):
+    
+    # Hardcode a start date
+    start_date = '2020-07-01'
+    max_date = df['date'].max()
+
+    start_date_int = int(time.mktime(datetime.datetime.strptime(start_date, '%Y-%m-%d').timetuple()))
+    
+    max_date_int = int(time.mktime(datetime.datetime.strptime(df['date'].max(), '%Y-%m-%d').timetuple()))
+
+    # Create a list of dates from max to min, going back 2 weeks each time
+    date_list = range(start_date_int, max_date_int, (14*24*60*60))
+    
+    date_dict = {'date':[time.strftime('%Y-%m-%d',datetime.datetime.strptime(day, '%Y-%m-%d').timetuple()) for day in df['date']]}
+    
+    
+    #date_dict = {day:{'label':time.strftime('%Y-%m-%d',time.localtime(day)),'style':{'writing-mode': 'vertical-rl','text-orientation': 'sideways', 'height':'70px'}}  for day in date_list}
+    return date_dict
 
 # Choropleth animation
 def plot_animation(df, category='death'):
-    fig = px.choropleth(data_frame=df,
+    fig = px.choropleth(
+                data_frame=df.sort_values(by='date'),
                 locations='state',
-                color='death',
+                range_color=[0,1200],#[0,8000],
+                color=category,
                 locationmode='USA-states',
                 animation_frame='date',
-                category_orders=animation_date_dict)
-    
-    fig.update_geos(center = {"lat": 37.0902, "lon": -95.7129},
+                animation_group = 'state'
+                #projection='natural earth'
+                #category_orders=generate_animation_dates(df))
+        )
+    fig.update_geos(center = {
+        "lat": 37.0902, 
+        "lon": -95.7129},
                     scope = 'usa')
     return fig

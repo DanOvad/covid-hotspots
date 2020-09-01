@@ -9,10 +9,15 @@ __pycache__/
 # Do not include data
 data/
 
-# Do not include 
+# Do not include the config folder - Google Cloud service account json secret
+config/
+
+# Do not include scratch files
 scratch.*
 scratch/
 
 # Do not include checkpoints
 .ipynb_checkpoints/
 *.ipynb_checkpoints
+
+# Anything else?
