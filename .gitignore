@@ -2,9 +2,11 @@
 
 # Do not include the virtual environment
 venv/
+heroku-env/
 
-# Do not include __pycache__
+# Do not include __pycache__ from any directory
 __pycache__/
+*__pycache__/
 
 # Do not include data
 data/
@@ -12,9 +14,10 @@ data/
 # Do not include the config folder - Google Cloud service account json secret
 config/
 
-# Do not include scratch files
+# Do not include scratch files or folders in any directory
 scratch.*
 scratch/
+*scratch/
 
 # Do not include checkpoints
 .ipynb_checkpoints/
