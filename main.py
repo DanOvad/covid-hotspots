@@ -29,10 +29,15 @@ from modules import plotting
 # Get county geojson for county polygones
 COUNTY_GEOJSON = data_processing.load_county_geojson() # cache_mode
 # Get county coronavirus data
-COVID_COUNTIES_DF = data_processing.get_covid_county_data() #cache_mode
+t0=time.time()
+COVID_COUNTIES_DF = data_processing.get_covid_county_data(cache_mode = 3) #cache_mode
+print(f"Time for county:{time.time() - t0}")
+      
+      
 # Get state coronavirus data
-COVID_STATES_DF = data_processing.get_covid_state_data(cache_mode = 2)
-
+t0=time.time()
+COVID_STATES_DF = data_processing.get_covid_state_data(cache_mode = 3)
+print(f"Time for county:{time.time() - t0}")
 date_dict = data_processing.generate_slider_dates(COVID_COUNTIES_DF)
 max_date_str = time.strftime("%Y-%m-%d",time.localtime(max(date_dict)))
 

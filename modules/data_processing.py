@@ -11,7 +11,7 @@ import datetime
 
 from os import path
 
-
+from google.cloud import storage
 
 
 ################################################################################
@@ -65,16 +65,7 @@ def get_census_county_data():
     # Read in the data to dataframe
     census_df = pd.read_csv(url, encoding = "ISO-8859-1")
     
-    # Define features
-    features = ['SUMLEV',
-                'REGION',
-                'DIVISION',
-                'STATE',
-                'COUNTY',
-                'STNAME',
-                'CTYNAME',
-                'POPESTIMATE2019',
-                'CENSUS2010POP']
+
     # Use apply across rows to generate fips codes.
     census_df['FIPS'] = census_df[['STATE','COUNTY']].apply(
         lambda x:generate_fips(
@@ -82,10 +73,10 @@ def get_census_county_data():
             x['COUNTY']
         ), axis = 1
     )
-
-    # Add the new column to our features.
-    if 'FIPS' not in features:
-        features.append('FIPS')
+    # Define features
+    features = ['FIPS',
+                'POPESTIMATE2019',
+                'CENSUS2010POP']
     
     return census_df[features]
 
@@ -93,25 +84,50 @@ def get_census_county_data():
 # County Covid Data
 
 # Get covid data at a county level.
-def get_covid_county_data():
+def get_covid_county_data(cache_mode = 1):
     '''Function to return covid county data from nytimes github\n
-    https://raw.githubusercontent.com/nytimes/covid-19-data'''
+    https://raw.githubusercontent.com/nytimes/covid-19-data
+    
+    cache_mode: {0: No caching, 1: Read only caching, 2: Read/write caching}'''
     
     print("Retrieving Covid County data")
     # Set NYT github covid-19 data url
     
     today = time.strftime('%Y%m%d')
-    filepath = f'data/covid_counties_{today}.csv'
-    if path.exists(filepath):
-        print("Pulling county data from file.")
-        # Read in data from file
-        df = pd.read_csv(filepath)
+    filepath = f'data/covid_counties_{today}.csv.gz'
+    
+    if cache_mode == 3:    
+        
+        bucket_name = 'us_covid_hotspot-bucket'
+        blob_name = "covid_counties_20200901.csv.gz"
+        blob_uri = f"gs://{bucket_name}/{blob_name}"
+        print(f"Pulling county data from GCS [{blob_uri}]")
+        
+        # Get the client object to make the request
+        client = storage.Client()
+    
+        df = pd.read_csv(blob_uri, compression = 'gzip')
         
         # Set date format
         df['date'] = pd.to_datetime(df['date'], format = '%Y-%m-%d')
         
         # Reassign our fips to be a string of length 5
         df['fips'] = df['fips'].astype(str).apply(lambda x: '0'+x[:4] if len(x) == 6 else x[:5])
+        
+    elif (path.exists(filepath) and cache_mode in (1,2)):
+        
+        print("Pulling county data from file.")
+        
+        # Read in data from file
+        df = pd.read_csv(filepath, compression = 'gzip')
+        
+        # Set date format
+        df['date'] = pd.to_datetime(df['date'], format = '%Y-%m-%d')
+        
+        # Reassign our fips to be a string of length 5
+        df['fips'] = df['fips'].astype(str).apply(lambda x: '0'+x[:4] if len(x) == 6 else x[:5])
+        
+        
     else:
         print("Pulling county data from github.")
         # NYT covid-19 github url
@@ -159,6 +175,7 @@ def get_covid_county_data():
                 by = ['fips','county','state'])['cases'].diff()
 
         #df['case_pm_diff'] = df.sort_values(by=['fips','state','county','date'])['casesPerMillion'].diff()
+        
         # New Deaths by day
         df['death_diff'] = df.groupby(
                 by = ['fips','county','state'])['deaths'].diff()
@@ -173,9 +190,9 @@ def get_covid_county_data():
             by=['fips','county','state'], 
             as_index=False)['death_diff'].rolling(14).mean().reset_index(level=0, drop=True)
         print(f"{time.time()-x0} for MA")
-        
-        # Write to file
-        df.to_csv(filepath, index=False)
+        if cache_mode == 2:
+            # Write to file
+            df.to_csv(filepath, index=False, compression='gzip')
     
     return df
 
@@ -187,14 +204,27 @@ def get_covid_state_data(cache_mode = 1):
     # Cache mode 
     # 0 = No cache, 
     # 1 = Read only cache
-    # 2 = Read/Write cache, 
+    # 2 = Read/Write cache,
+    # 3 = Read from GCS bucket
     
     today = time.strftime('%Y%m%d')
-    filepath = f'data/covid_states_{today}.csv'
+    filepath = f'data/covid_states_{today}.csv.gz'
     
-    if path.exists(filepath) & cache_mode in (1,2):
+    if cache_mode == 3:
+        print("Pulling state data from Cloud Storage")
+        bucket_name = 'us_covid_hotspot-bucket'
+        blob_name = "covid_states_20200901.csv.gz"
+        blob_uri = f"gs://{bucket_name}/{blob_name}"
+        print(blob_uri)
+        
+        # Get the client object to make the request
+        client = storage.Client()
+    
+        covid_states_df = pd.read_csv(blob_uri, compression = 'gzip')
+        
+    elif (path.exists(filepath) and cache_mode in (1,2)):
         print("Pulling state data from file.")
-        covid_states_df = pd.read_csv(filepath)
+        covid_states_df = pd.read_csv(filepath, compression = 'gzip')
         
         # Data Cleaning
         #covid_states_df['date'] = pd.to_datetime(covid_states_df['date'], format="%Y-%m-%d")
@@ -248,7 +278,7 @@ def get_covid_state_data(cache_mode = 1):
         )['positiveIncrease'].rolling(14).mean().reset_index(level=0, drop=True)
         
         if cache_mode == 2:
-            covid_states_df.to_csv(filepath, index=False)
+            covid_states_df.to_csv(filepath, index=False, compression='gzip')
             
     return covid_states_df
 
