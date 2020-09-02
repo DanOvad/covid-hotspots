@@ -75,6 +75,8 @@ def get_census_county_data():
     )
     # Define features
     features = ['FIPS',
+                'STATE',
+                'COUNTY',
                 'POPESTIMATE2019',
                 'CENSUS2010POP']
     
