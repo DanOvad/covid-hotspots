@@ -133,10 +133,8 @@ def get_covid_county_data(cache_mode = 1):
         # NYT covid-19 github url
         url = 'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv'
         
-        x0 = time.time()
         # Read in data from github
         df = pd.read_csv(url)
-        print(f"{time.time()-x0} for Read")
         
         # Reassign our fips to be a string of length 5
         df['fips'] = df['fips'].astype(str).apply(lambda x: '0'+x[:4] if len(x) == 6 else x[:5])
@@ -150,14 +148,13 @@ def get_covid_county_data(cache_mode = 1):
         # Create log_cases column
         #df['log_cases'] = np.log(df['cases'] + 1)
 
-        x0 = time.time()
+         
         # Get Census data and Merge dataframes on fips
         df = df.merge(get_census_county_data(),
                         how='left',
                         left_on='fips',
                         right_on='FIPS')
-        print(f"{time.time()-x0} for census merge")
-        x0 = time.time()
+         
         # Cases Per Million
         df['casesPerMillion']=df['cases']/df['POPESTIMATE2019']*1000000
         #df['log_casesPerMillion']= np.log(df['casesPerMillion']+1)
@@ -165,12 +162,11 @@ def get_covid_county_data(cache_mode = 1):
         # Deaths Per Million
         df['deathsPerMillion']=df['deaths']/df['POPESTIMATE2019']*1000000
         #df['log_deathsPerMillion']= np.log(df['deathsPerMillion']+1)
-        print(f"{time.time()-x0} for capita")
         
         # New Cases by day
         #df['case_diff'] = df.sort_values(by=['fips','state','county','date'])['cases'].diff()
         
-        x0 = time.time()
+         
         df['case_diff'] = df.groupby(
                 by = ['fips','county','state'])['cases'].diff()
 
@@ -179,9 +175,8 @@ def get_covid_county_data(cache_mode = 1):
         # New Deaths by day
         df['death_diff'] = df.groupby(
                 by = ['fips','county','state'])['deaths'].diff()
-        print(f"{time.time()-x0} for diff")
         
-        x0 = time.time()
+         
         df["cases_14MA"] = df.groupby(
             by=['fips','county','state'], 
             as_index=False)['case_diff'].rolling(14).mean().reset_index(level=0, drop=True)
@@ -189,7 +184,6 @@ def get_covid_county_data(cache_mode = 1):
         df["deaths_14MA"] = df.groupby(
             by=['fips','county','state'], 
             as_index=False)['death_diff'].rolling(14).mean().reset_index(level=0, drop=True)
-        print(f"{time.time()-x0} for MA")
         if cache_mode == 2:
             # Write to file
             df.to_csv(filepath, index=False, compression='gzip')
