@@ -257,16 +257,20 @@ def get_covid_state_data(cache_mode = 1):
         # set date to index
         #covid_states_df.set_index(keys='date',inplace=True)
         
+        # Pull in state population data
         state_pop = pd.read_csv('data/tbl_states.csv')
         
+        # Merge data with state data
         covid_states_df = covid_states_df.merge(state_pop, 
                               how='left',
                               left_on='state',
                               right_on='state')
         
+        # Per Capita
         covid_states_df['case_pm'] = covid_states_df['positive']/covid_states_df['Pop']*1000000
         covid_states_df['death_pm'] = covid_states_df['death']/covid_states_df['Pop']*1000000
         
+        # Daily Increase Moving Averages
         covid_states_df["deaths_14MA"] = covid_states_df.groupby(
             by=['state'], 
             as_index=False
@@ -276,6 +280,8 @@ def get_covid_state_data(cache_mode = 1):
             by=['state'], 
             as_index=False
         )['positiveIncrease'].rolling(14).mean().reset_index(level=0, drop=True)
+        
+        
         
         if cache_mode == 2:
             covid_states_df.to_csv(filepath, index=False, compression='gzip')
