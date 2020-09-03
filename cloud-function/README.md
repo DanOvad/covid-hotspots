@@ -2,7 +2,7 @@
 
 <b>By:</b> Dan Ovadia<br>
 <b>Date:</b> September 3, 2020
-## Google Cloud Platform Components
+## Google Cloud Platform (GCP) Components
 
 This read me will explain how the Google Cloud Platform components work to support the Heroku App hosting the covid dashboard. 
 
@@ -14,7 +14,10 @@ A GCS bucket was created to host `covid_counties.csv`, `covid_states.csv`, and `
 
 To automate the data processing and loading to the Cloud Storage bucket, a cloud function was created specifically to do the following:
 
-- Retrieve required data from the New York Times github (county data), The Atlantic's Covid Tracking Project (state data), and census.gov for census data.
+- Retrieve required data from datasources:
+    - New York Times github (county data)
+    - The Atlantic's Covid Tracking Project (state data)
+    - Census.gov (county population data)
 - Process the data in pandas to clean and create fields for the dashboard.
 - Transform the dataframes to a BytesIO objects, compress using gzip. 
 - Load the gziped buffer to Cloud Storage.
@@ -65,3 +68,7 @@ In the end, I created a virtual python environment using `venv` and `pip install
 
 ## Conclusion
 In conclusion, this process was actually incredibly easy. During the process I realized that App Engine automatically creates a bucket in Cloud Storage associated to the App. If I had hosted the web application on GCP from the start I likely could have leveraged that functionality, instead of creating a separate GCS bucket dedicated to hosting covid data.
+
+Kudos to Wallace Wong for writing a linkedIn post that helped guide me. 
+
+[Scheduling Python scripts on GCP using Cloud Functions and Scheduler](https://www.linkedin.com/pulse/scheduling-python-scripts-gcp-using-cloud-functions-scheduler-wong/?trackingId=DmoCY%2FbITJygLGkQ0t6EqA%3D%3D) - By Wallace Wong, Nov 19, 2019
