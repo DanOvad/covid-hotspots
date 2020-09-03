@@ -24,11 +24,11 @@ To automate the data processing and loading to the Cloud Storage bucket, a cloud
 
 ### 3. Google Pub/Sub
 
-A Pub/Sub topic was created specifically for the Cloud Function to receive triggers from the Cloud Scheduler. The Cloud Function is subscribed to the Pub/Sub topic as it's trigger. The Cloud Scheduler creates a cron job that writes to the Pub/Sub topic, which subsequently triggers the Cloud Function to in reliable interviews as prescribed.
+A Pub/Sub topic was created specifically for the Cloud Function to receive triggers from the Cloud Scheduler. The Cloud Function is subscribed to the Pub/Sub topic as it's trigger. 
 
 ### 4. Google Cloud Scheduler
 
-A cron job was created to write to the Pub/Sub topic and subsequently run the Cloud Function, which updates our Google Cloud Storage buckets.
+A cron job was created in Cloud Scheduler to write to the Pub/Sub topic and subsequently run the Cloud Function, which updates our Google Cloud Storage buckets.
 
 ---
 ## Creating the Cloud Function
@@ -37,10 +37,12 @@ In order to create the Cloud Function, a couple pieces are required:
 2. A `requirements.txt` file which represents the python libraries needed to be imported to support the python script.
 3. Any other dependences such as custom modules.
 
+A Cloud Function represents a virtual machine that is built off a list of requirements and executes lines of code in a serverless environment. This means while you can have objects in memory, there is no local disk to write to for temporary file handling.
+
 ### Script
 
 ### Requirements.txt
-In order to accurately generate the `requirements.txt` file, it is common practice to create a fresh virtual python environment and import specific dependencies for your scripts. This is easily done using either [venv](https://docs.python.org/3/library/venv.html) or [conda](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/). 
+In order to accurately generate the `requirements.txt` file, it is common practice to create a fresh virtual python environment and import specific dependencies for your scripts. This is easily done using either venv, ([like this](https://docs.python.org/3/library/venv.html)){:target="_blank"} or conda, ([like this](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/)). 
 
 Test run the code in the virtual environment to make sure that all requirements have been satisfied. This is also a good time to check to make sure that your code does not have any other dependencies such as local data, or other local module references.
 
