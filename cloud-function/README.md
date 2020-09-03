@@ -37,21 +37,31 @@ In order to create the Cloud Function, a couple pieces are required:
 ### Script
 
 ### Requirements.txt
-In order to accurately generate the requirements.txt file, it is common practice to create a fresh virtual python environment and import specific dependencies for your scripts. This is easily done using either [venv](https://docs.python.org/3/library/venv.html) or [conda](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/). 
+In order to accurately generate the `requirements.txt` file, it is common practice to create a fresh virtual python environment and import specific dependencies for your scripts. This is easily done using either [venv](https://docs.python.org/3/library/venv.html) or [conda](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/). 
 
 Test run the code in the virtual environment to make sure that all requirements have been satisfied. This is also a good time to check to make sure that your code does not have any other dependencies such as local data, or other local module references.
 
 Next, we generate the `requirements.txt` file. To export a list of installed packages and respective versions, run the following in terminal while in the project directory: 
-<pre><code>pip freeze > requirements.txt</pre></code>
+<pre><code>pip freeze > requirements.txt</code></pre>
 In this code, `pip freeze` generates a list with `package`==`version` for all dependencies in your virtual environment.
 
 #### In Practice
-I ran into some trouble while trying to create the requirements.txt file. I am more comfortable using `pip` and `venv` than I am using `conda`. I had some version differences between installations using pip and installations using conda. For example, `google-cloud-storage` was installed as `v 1.28.0` using conda, while pip installed the most recent version `v 1.31.0`. At the time of this writing `v 1.31.0` had only been out for less than a week, so it's only fair. 
+I ran into some trouble while trying to create the requirements.txt file. I am more comfortable using `pip` and `venv` than I am using `conda`. Below are some of the issues I ran into:
 
-Aside from that `pip freeze > requirements.txt` worked while using a conda environment, but some packages did not come back listing the version numbers they were using. Instead it returned `package == @file:////[some-directory]` for some packages. Meanwhile, conda's version of `pip freeze` gave me back a requirements file that GCF could not read. It was in a different format that seemed specific to conda's creation of virtual environments. To me it seemed that Heroku and GCP both use pip as their primary installing package on virtual machines. 
+1. I had some version differences between installations using pip and installations using conda. For example, `google-cloud-storage` was installed as `v 1.28.0` using conda, while pip installed `v 1.31.0` the most recent version. At the time of this writing `v 1.31.0` had only been out for less than a week, so it's only fair. 
 
-Disclaimer: <i>I would recommend using <b>venv</b> for deploying to the cloud. It was a lot more intuitive for me and has always just worked seemlessly. I've used conda before, just not in the context of exporting requirements and deploying to the cloud.</i>
+2. I had issues producing a viable `requirements.txt` file. I tried using both pip and conda. 
 
+    <b>Using pip:</b> <pre><code>pip freeze > requirements.txt</code></pre> 
+
+    failed to return version numbers for conda installed packages, specifically returning `package==@file:////[some-path]`. 
+    
+    <b>Using Conda:</b> <pre><code>conda list --export > requirements.txt</code></pre>
+    
+    returned a file completely in the wrong format, specifically `package=version=build=channel`, instead of `package==version` as GCF was expecting.
+
+
+In the end, I created a virtual python environment using `venv` and `pip installed` required packages and the whole process was seemless.  It was a lot more intuitive for me and has always just worked seemlessly.
 
 ## Conclusion
 In conclusion, this process was actually incredibly easy. During the process I realized that App Engine automatically creates a bucket in Cloud Storage associated to the App. If I had hosted the web application on GCP from the start I likely could have leveraged that functionality, instead of creating a separate GCS bucket dedicated to hosting covid data.
