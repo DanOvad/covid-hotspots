@@ -1,8 +1,9 @@
 
 
-# Do not include the virtual environment
+# Do not include the virtual environment, from any directory
 venv/
 heroku-env/
+*CF-venv/
 
 # Do not include __pycache__ from any directory
 __pycache__/

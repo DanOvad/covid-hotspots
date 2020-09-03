@@ -71,7 +71,7 @@ def get_census_county_data():
         lambda x:generate_fips(
             x['STATE'],
             x['COUNTY']
-        ), axis = 1
+        ), axis=1
     )
     # Define features
     features = ['FIPS',
@@ -223,35 +223,22 @@ def get_covid_state_data(cache_mode = 1):
         covid_states_df = pd.read_csv(filepath, compression = 'gzip')
         
         # Data Cleaning
-        #covid_states_df['date'] = pd.to_datetime(covid_states_df['date'], format="%Y-%m-%d")
+        covid_states_df['date'] = pd.to_datetime(covid_states_df['date'], format="%Y-%m-%d")
         
     else:
         print("Pulling state data from Covid Tracking API")
         
         # Coronavirus data by state from covidtracking API
         states_url = "https://covidtracking.com/api/states/daily"
-        t0 = time.time()
+        
         with requests.get(states_url) as response:
             covid_states_df = pd.DataFrame.from_records(
                 response.json(),
                 index = range(len(response.json()))
             )
-        
-        # Pull from COVID Tracking API
-        t0 = time.time()
-        #with urlopen(states_url) as response:
-        #    covid_states_json = json.load(response)
-        print(f"{time.time()-t0} to pull data")
-        
-        t0 = time.time()
-        #covid_states_df = pd.DataFrame(covid_states_json)
-        print(f"{time.time()-t0} to df data")
-        
+
         # Set date as datetime format
         covid_states_df['date'] = pd.to_datetime(covid_states_df['date'], format="%Y%m%d")
-        #covid_states_df['date'] = covid_states_df['datetime'].map(lambda x:x.strftime('%Y-%m-%d'))
-        # set date to index
-        #covid_states_df.set_index(keys='date',inplace=True)
         
         # Pull in state population data
         state_pop = pd.read_csv('data/tbl_states.csv')
