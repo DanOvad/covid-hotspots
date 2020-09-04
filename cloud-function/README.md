@@ -33,7 +33,7 @@ To automate the ETL process to the Cloud Storage bucket, a cloud function was cr
 ### 4. Google Cloud Scheduler
 [Skip Ahead: [Creating the Cron Job](#4---Creating-the-Cron-Job)]
 
-A cron job was created in Cloud Scheduler to write to the Pub/Sub topic and subsequently run the Cloud Function, which updates our Google Cloud Storage buckets.
+A cron job was created in Cloud Scheduler to write to the Pub/Sub topic and subsequently run the Cloud Function, which updates blobs in our Google Cloud Storage bucket.
 
 ### 5. Conclusion
 [Skip Ahead: [Conclusion](#5---Conclusion)]
@@ -43,8 +43,10 @@ Ten out of ten, <br>would do it again.
 ---
 
 ## 1 - Using Google Cloud Storage
+**todo**
 
 ### Creating the Bucket
+**todo**
 
 
 ### Creating a Service Account
@@ -65,7 +67,7 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '[PATH]/config_file.json'</code><
 
 
 ### Uploading from python
-
+**todo**
 
 
 ---
@@ -78,7 +80,7 @@ When you arrive at `console.cloud.google.com/cloudpubsub/` this is what you're g
 </kbd>
 
 #### Step One - Create Topic
-All you've got to do is name your topic. This topic will be used by both the cron job and the cloud function. The cron job will <u><b>publish to</b></u> the topic, while the cloud function will <u><b>subscribe to</b></u> the topic.
+All you've got to do is name your topic. This topic will be used by both the cron job and the cloud function. The cron job will <u><b>publish to</b></u> the topic, while the cloud function will <u><b>subscribe to</b></u> the topic. Hence, Pub/Sub.
 <kbd>
   <img src="../images/cloud_topic_create_1.png">
 </kbd>
@@ -233,6 +235,9 @@ After hitting create, the job will be available in the dashboard for Cloud Sched
 
 ---
 ## 5 - Conclusion
+
+Watching it all run **todo**
+
 In conclusion, this process was actually incredibly easy. During the process I realized that App Engine automatically creates a bucket in Cloud Storage associated to the App. If I had hosted the web application on GCP from the start I likely could have leveraged that functionality, instead of creating a separate GCS bucket dedicated to hosting covid data.
 
 Kudos to Wallace Wong for writing a linkedIn post that helped guide me.
