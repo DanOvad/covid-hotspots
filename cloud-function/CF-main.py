@@ -9,6 +9,17 @@ from io import BytesIO, TextIOWrapper
 
 from google.cloud import storage
 
+def hello_pubsub(event, context):
+    """Triggered from a message on a Cloud Pub/Sub topic.
+    Args:
+         event (dict): Event payload.
+         context (google.cloud.functions.Context): Metadata for the event.
+    """
+    main()
+    #pubsub_message = base64.b64decode(event['data']).decode('utf-8')
+    print(pubsub_message)
+
+
 # Get state covid data from Covid Tracking Project's API
 def generate_covid_state_data():
     ''' This function is specific to gathering data from github with no caching. And loading that data to GCS.'''
@@ -123,11 +134,7 @@ def generate_covid_county_data():
     df['fips'] = df['fips'].astype(str).apply(lambda x: '0'+x[:4] if len(x) == 6 else x[:5])
     # Set date format
     df['date'] = pd.to_datetime(df['date'], format = '%Y-%m-%d')
-    # Create log_deaths column
-    #df['log_deaths'] = np.log(df['deaths'] + 1)
-    # Create log_cases column
-    #df['log_cases'] = np.log(df['cases'] + 1)
-     
+
     # Get Census data and Merge dataframes on fips
     df = df.merge(get_census_county_data(),
                     how='left',
@@ -136,13 +143,8 @@ def generate_covid_county_data():
      
     # Cases Per Million
     df['casesPerMillion']=df['cases']/df['POPESTIMATE2019']*1000000
-    #df['log_casesPerMillion']= np.log(df['casesPerMillion']+1)
     # Deaths Per Million
     df['deathsPerMillion']=df['deaths']/df['POPESTIMATE2019']*1000000
-    #df['log_deathsPerMillion']= np.log(df['deathsPerMillion']+1)
-    
-    # New Cases by day
-    #df['case_diff'] = df.sort_values(by=['fips','state','county','date'])['cases'].diff()
     
      
     df['case_diff'] = df.groupby(
@@ -167,7 +169,7 @@ def write_df_to_GCS(df, blob_name):
     bucket_name = 'us_covid_hotspot-bucket'
     blob_uri = f"gs://{bucket_name}/{blob_name}"
     
-    # Instantiate BytesIO Object
+    # Instantiate BytesIO Buffer
     gz_buffer = BytesIO()
     
     # Instantiate a GzipFile Object using the BytesIO object, 
@@ -199,14 +201,15 @@ def main():
     
     # Read in new county data from Covid Tracking Project
     t0 = time.time()
-    COVID_STATES_DF = generate_covid_state_data()
-    print(f"Getting States data took: {time.time() - t0} seconds")
+    DF = generate_covid_state_data()
+    print(f"Getting covid_states_df took: {round(time.time() - t0,2)} seconds")
     # Write df to GCS
     
     print(f"Writing {BLOB_NAME} to GCS {BUCKET_NAME}")
     t0=time.time()
+    # Write to Bucket - state
     write_df_to_GCS(COVID_STATES_DF, BLOB_NAME)
-    print(f"Writing took: {time.time()-t0} seconds")
+    print(f"Writing {BLOB_NAME} took: {round(time.time()-t0,2)} seconds")
     
     ######
     # County Data - Setting Variables
@@ -214,8 +217,8 @@ def main():
 
     # Getting Data
     t0 = time.time()
-    COVID_COUNTIES_DF = generate_covid_county_data()
-    print(f"Getting County data took: {time.time() - t0} seconds")
+    DF = generate_covid_county_data()
+    print(f"Getting covid_county_df took: {round(time.time() - t0,2)} seconds")
     
     # Write file to GCS
     print(f"Writing {BLOB_NAME} to GCS {BUCKET_NAME}")
@@ -223,4 +226,26 @@ def main():
     print(f"This process took {time.time()-t0} seconds")
     
     
-main()
+    
+def main():
+    # State Data - Setting Variables
+    BUCKET_NAME = 'us_covid_hotspot-bucket'
+    BLOB_NAME = 'covid_states.csv.gz'
+    
+    # Read and transform in state data from Covid Tracking Project
+    DF = generate_covid_state_data()
+    
+    # Write to Bucket - state
+    print(f"Writing {BLOB_NAME} to GCS {BUCKET_NAME}")
+    write_df_to_GCS(COVID_STATES_DF, BLOB_NAME)
+    
+    
+    # County Data - Setting Variables
+    BLOB_NAME = 'covid_counties.csv.gz'
+
+    # Read and transform county data from New York Times
+    DF = generate_covid_county_data()
+    
+    # Write file to GCS
+    print(f"Writing {BLOB_NAME} to GCS {BUCKET_NAME}")
+    write_df_to_GCS(COVID_COUNTIES_DF, BLOB_NAME)

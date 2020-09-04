@@ -8,7 +8,7 @@ This read me will explain how the Google Cloud Platform components work to suppo
 
 ### 1. Google Cloud Storage (GCS)
 
-A GCS bucket was created to host `covid_counties.csv`, `covid_states.csv`, and `states_population.csv`. The files were compressed using gZip and loaded using the `google-cloud-storage` python library. 
+A GCS bucket was created to host `covid_counties.csv.gz`, `covid_states.csv.gz`, and `states_population.csv`. The files were retrieved from multiple data sources, loaded into pandas, transformed. Then created a buffer via BytesIO and compressed using gZip loaded to the bucket using the `google-cloud-storage` python library. 
 
 ### 2. Google Cloud Function (CGF)
 
@@ -19,8 +19,8 @@ To automate the data processing and loading to the Cloud Storage bucket, a cloud
     - [The Atlantic's Covid Tracking Project](https://covidtracking.com/data/api/) (for state data)
     - [Census.gov](https://www.census.gov/data/datasets/time-series/demo/popest/2010s-counties-total.html#par_textimage_70769902) (for county population data)
 - Process the data in pandas to clean and create fields for the dashboard.
-- Transform the dataframes to a BytesIO objects, compress using gzip. 
-- Load the gziped buffer to the Cloud Storage Bucket.
+- Transform the dataframes to BytesIO objects, compress using gzip. 
+- Load the gzipped buffer to the Cloud Storage Bucket.
 
 ### 3. Google Pub/Sub
 
@@ -40,6 +40,84 @@ In order to create the Cloud Function, a couple pieces are required:
 A Cloud Function represents a virtual machine that is built off a list of requirements and executes lines of code in a serverless environment. This means while you can have objects in memory, there is no local disk to write to for temporary file handling.
 
 ### Script
+
+At the heart of the cloud function was this `main()` function. Here we essentially read data and write to the cloud. This is handled by three core functions: `generate_covid_state_data()`, `generate_covid_county_data()`, and `write_df_to_GCS(df, blob_name)`.
+
+
+<pre><code>def main(event, context):
+    # State Data - Setting Variables
+    BUCKET_NAME = "us_covid_hotspot-bucket"
+    BLOB_NAME = "covid_states.csv.gz"
+    
+    # Read and transform state data from Covid Tracking Project
+    DF = generate_covid_state_data()
+    
+    # Write to Bucket - state
+    print(f"Writing {BLOB_NAME} to GCS {BUCKET_NAME}")
+    write_df_to_GCS(COVID_STATES_DF, BLOB_NAME)
+    
+    
+    # County Data - Setting Variables
+    BLOB_NAME = "covid_counties.csv.gz"
+
+    # Read and transform county data from New York Times
+    DF = generate_covid_county_data()
+    
+    # Write file to GCS
+    print(f"Writing {BLOB_NAME} to GCS {BUCKET_NAME}")
+    write_df_to_GCS(COVID_COUNTIES_DF, BLOB_NAME)</code></pre>
+
+While these functions do rely on other defined functions, these are the backbone of the process. Essentially they are two read functions and one write function.
+
+Function operations:
+- <b>Read functions:</b> `generate_covid_state_data()` and `generate_covid_county_data()`
+    - pull in covid <b>state</b> and <b>county</b> data
+    - do a handful of transformations
+    - merge in population data
+    - calculate moving averages and density ratios
+    - return a pandas dataframe
+- <b>Write function:</b> `write_df_to_GCS(df, blob_name)`
+    - take a dataframe and blob_name
+    - create a BytesIO buffer to hold the compressed dataframe
+    - create a GzipFile wrapped in a TextIOWrapper, and write the dataframe to the BytesIO buffer through the GzipFile.
+    - set the buffer to the beginning
+    - open a connection to storage
+    - retrieve the bucket and blob_name provided
+    - upload the BytesIO buffer holding the original dataframe
+
+### Uploading to Cloud Functions
+
+You could deploy a cloud function using the google cloud SDK through `gcloud` commands. Or you can also do it through the Google Cloud Console at [console.cloud.google.com/](console.cloud.google.com/). Below demonstrates the steps to upload from the browser in console.
+
+
+#### Step 1 - Set the trigger and define parameters
+Here we are using a Pub/Sub topic as our trigger. We will later define a cron job through Cloud Scheduler to write to the topic and trigger this function to run every morning at 4AM.
+
+![image](../images/cloud_function_deploy_1.png)
+
+
+#### Step 2 - Provide the code base for your function
+
+Here we select the runtime we choose to use and provide the code base for the function. Essentially `requirements.txt` and `main.py`. The only requirement was that the main function needed to take in two parameters, `event` and `context`. I believe this is due to how Pub/Sub topic work and could be very useful in particular situations.
+
+![image](../images/cloud_function_deploy_2.png)
+
+#### Step 1 - Set the trigger and define parameters
+Here we are using a Pub/Sub topic as our trigger. We will later define a cron job through Cloud Scheduler to write to the topic and trigger this function to run every morning at 4AM.
+
+<kbd>
+  <img src="../images/cloud_function_deploy_1.png">
+</kbd>
+
+
+#### Step 2 - Provide the code base for your function
+
+Here we select the runtime we choose to use and provide the code base for the function. Essentially `requirements.txt` and `main.py`. The only requirement was that the main function needed to take in two parameters, `event` and `context`. I believe this is due to how Pub/Sub topic work and could be very useful in particular situations.
+
+<kbd>
+  <img src="../images/cloud_function_deploy_2.png">
+</kbd>
+
 
 ### Requirements.txt
 In order to accurately generate the `requirements.txt` file, it is common practice to create a fresh virtual python environment and import specific dependencies for your scripts. This is easily done using either venv, ([like this](https://docs.python.org/3/library/venv.html)) or conda, ([like this](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/)). 
