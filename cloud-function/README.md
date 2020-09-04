@@ -15,12 +15,12 @@ A GCS bucket was created to host `covid_counties.csv`, `covid_states.csv`, and `
 To automate the data processing and loading to the Cloud Storage bucket, a cloud function was created specifically to do the following:
 
 - Retrieve required data from datasources:
-    - New York Times github (county data)
-    - The Atlantic's Covid Tracking Project (state data)
-    - Census.gov (county population data)
+    - [New York Times github](https://github.com/nytimes/covid-19-data) (for county data)
+    - [The Atlantic's Covid Tracking Project](https://covidtracking.com/data/api/) (for state data)
+    - [Census.gov](https://www.census.gov/data/datasets/time-series/demo/popest/2010s-counties-total.html#par_textimage_70769902) (for county population data)
 - Process the data in pandas to clean and create fields for the dashboard.
 - Transform the dataframes to a BytesIO objects, compress using gzip. 
-- Load the gziped buffer to Cloud Storage.
+- Load the gziped buffer to the Cloud Storage Bucket.
 
 ### 3. Google Pub/Sub
 
@@ -42,7 +42,7 @@ A Cloud Function represents a virtual machine that is built off a list of requir
 ### Script
 
 ### Requirements.txt
-In order to accurately generate the `requirements.txt` file, it is common practice to create a fresh virtual python environment and import specific dependencies for your scripts. This is easily done using either venv, ([like this](https://docs.python.org/3/library/venv.html)){:target="_blank"} or conda, ([like this](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/)). 
+In order to accurately generate the `requirements.txt` file, it is common practice to create a fresh virtual python environment and import specific dependencies for your scripts. This is easily done using either venv, ([like this](https://docs.python.org/3/library/venv.html)) or conda, ([like this](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/)). 
 
 Test run the code in the virtual environment to make sure that all requirements have been satisfied. This is also a good time to check to make sure that your code does not have any other dependencies such as local data, or other local module references.
 
@@ -66,8 +66,9 @@ I ran into some trouble while trying to create the requirements.txt file. I am m
     returned a file completely in the wrong format, specifically `package=version=build=channel`, instead of `package==version` as GCF was expecting.
 
 
-In the end, I created a virtual python environment using `venv` and `pip installed` required packages and the whole process was seemless.  It was a lot more intuitive for me and has always just worked seemlessly.
+In the end, I created a virtual python environment using `venv` and `pip installed` required packages and the whole process was seemless.  It was a lot more intuitive for me and has always just worked seemlessly. Although for more information on the differences between conda and pip, a post by Jake VanderPlas, [Conda: Myths and Misconceptions](https://jakevdp.github.io/blog/2016/08/25/conda-myths-and-misconceptions/) gives a lot of good context.
 
+---
 ## Conclusion
 In conclusion, this process was actually incredibly easy. During the process I realized that App Engine automatically creates a bucket in Cloud Storage associated to the App. If I had hosted the web application on GCP from the start I likely could have leveraged that functionality, instead of creating a separate GCS bucket dedicated to hosting covid data.
 
