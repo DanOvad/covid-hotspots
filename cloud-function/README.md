@@ -93,18 +93,6 @@ You could deploy a cloud function using the google cloud SDK through `gcloud` co
 #### Step 1 - Set the trigger and define parameters
 Here we are using a Pub/Sub topic as our trigger. We will later define a cron job through Cloud Scheduler to write to the topic and trigger this function to run every morning at 4AM.
 
-![image](../images/cloud_function_deploy_1.png)
-
-
-#### Step 2 - Provide the code base for your function
-
-Here we select the runtime we choose to use and provide the code base for the function. Essentially `requirements.txt` and `main.py`. The only requirement was that the main function needed to take in two parameters, `event` and `context`. I believe this is due to how Pub/Sub topic work and could be very useful in particular situations.
-
-![image](../images/cloud_function_deploy_2.png)
-
-#### Step 1 - Set the trigger and define parameters
-Here we are using a Pub/Sub topic as our trigger. We will later define a cron job through Cloud Scheduler to write to the topic and trigger this function to run every morning at 4AM.
-
 <kbd>
   <img src="../images/cloud_function_deploy_1.png">
 </kbd>
