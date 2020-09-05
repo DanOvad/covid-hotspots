@@ -31,6 +31,7 @@ To visualize current and historical trends of the coronavirus' spread in the Uni
 
 ---
 ## 1 - Modules
+The modules were split into two categories: (1) Data Processing, and (2) Plotting. Data processing handles any functions required to build out the dataframes needed for plotting. This includes but is not limited to: making HTTP requests to pull and clean data.
 
 ### Data Processing Functions
 
@@ -44,46 +45,6 @@ To visualize current and historical trends of the coronavirus' spread in the Uni
 
 ---
 ## 4 - Cloud Functions
-
-
-
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah 
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-
-
-
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-
-
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-
-
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-blab blah blah blah blab blah blah blah blab blah blah blah blab blah blah blah
-
 
 ---
 ## 5 - Conclusion
