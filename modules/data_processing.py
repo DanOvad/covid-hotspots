@@ -101,7 +101,7 @@ def get_covid_county_data(cache_mode = 1):
     if cache_mode == 3:    
         
         bucket_name = 'us_covid_hotspot-bucket'
-        blob_name = "covid_counties_20200901.csv.gz"
+        blob_name = "covid_counties.csv.gz"
         blob_uri = f"gs://{bucket_name}/{blob_name}"
         print(f"Pulling county data from GCS [{blob_uri}]")
         
@@ -197,19 +197,19 @@ def get_covid_county_data(cache_mode = 1):
 
 # Get state covid data from Covid Tracking Project's API
 def get_covid_state_data(cache_mode = 1):
-    # Cache mode 
-    # 0 = No cache, 
-    # 1 = Read only cache
-    # 2 = Read/Write cache,
-    # 3 = Read from GCS bucket
+    ''' Returns a time series dataframe with updated coronavirus numbers from each state.
     
+    cache_mode: {0: No cache, reads from source,
+            1: Read Only Cache, checks local file system,
+            2: Read/Write cache, checks filesystem and updates filesystem,
+            3: Read from GCS bucket, only reads from GCS}'''
     today = time.strftime('%Y%m%d')
     filepath = f'data/covid_states_{today}.csv.gz'
     
     if cache_mode == 3:
         print("Pulling state data from Cloud Storage")
         bucket_name = 'us_covid_hotspot-bucket'
-        blob_name = "covid_states_20200901.csv.gz"
+        blob_name = "covid_states.csv.gz"
         blob_uri = f"gs://{bucket_name}/{blob_name}"
         print(blob_uri)
         

@@ -1,4 +1,4 @@
-# README
+# README - Cloud Functions
 
 <b>By:</b> Dan Ovadia<br>
 <b>Date:</b> September 3, 2020
