@@ -60,6 +60,6 @@ rsa==4.6
 Shapely==1.7.1
 six==1.15.0
 typing-extensions==3.7.4.3
-urllib3==1.25.10
+urllib3==1.26.5
 Werkzeug==1.0.1
 yarl==1.5.1
